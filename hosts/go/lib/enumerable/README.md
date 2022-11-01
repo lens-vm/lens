@@ -1,0 +1,1 @@
+This directory is copy-pasted from "https://github.com/sourcenetwork/defradb/core/enumerable" and should contain no local changes. This package and that package should probably be unified and/or moved to a more suitable location at somepoint.
