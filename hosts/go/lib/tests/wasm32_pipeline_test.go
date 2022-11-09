@@ -114,3 +114,45 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFullToModuleAsFull(t *testing.T
 	}
 	assert.False(t, hasNext)
 }
+
+func TestWasm32PipelineFromSourceAsFullToModuleAsFullToGoModuleAsFull(t *testing.T) { //name
+	module1, err := lib.LoadModule(wasmPath1)
+	if err != nil {
+		t.Error(err)
+	}
+	module2, err := lib.LoadModule(wasmPath2)
+	if err != nil {
+		t.Error(err)
+	}
+	module3, err := lib.LoadModule(wasmPath3)
+	if err != nil {
+		t.Error(err)
+	}
+
+	input := type1{
+		Name: "John",
+		Age:  32,
+	}
+	source := enumerable.New([]type1{input})
+
+	pipe1 := lib.AppendLens[type1, type2](source, module1)
+	pipe2 := lib.AppendLens[type2, type2](pipe1, module2)
+	pipe3 := lib.AppendLens[type2, type2](pipe2, module3)
+
+	hasNext, err := pipe3.Next()
+	if err != nil {
+		t.Error(err)
+	}
+	assert.True(t, hasNext)
+
+	assert.Equal(t, type2{
+		FullName: "John",
+		Age:      34,
+	}, pipe3.Value())
+
+	hasNext, err = pipe3.Next()
+	if err != nil {
+		t.Error(err)
+	}
+	assert.False(t, hasNext)
+}

@@ -15,6 +15,10 @@ var wasmPath2 string = getPathRelativeToProjectRoot(
 	"tests/modules/rust_wasm32_simple2/target/wasm32-unknown-unknown/debug/rust_wasm32_simple2.wasm",
 )
 
+var wasmPath3 string = getPathRelativeToProjectRoot(
+	"tests/modules/go_wasm32_simple/target/wasm.wasm",
+)
+
 type type1 struct {
 	Name string
 	Age  int

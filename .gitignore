@@ -4,3 +4,4 @@ hosts/tests/modules/rust_wasm32_simple/pkg
 hosts/tests/modules/rust_wasm32_simple2/Cargo.lock
 hosts/tests/modules/rust_wasm32_simple2/target
 hosts/tests/modules/rust_wasm32_simple2/pkg
+hosts/tests/modules/go_wasm32_simple/target
