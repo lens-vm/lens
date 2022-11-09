@@ -15,6 +15,11 @@ var wasmPath2 string = getPathRelativeToProjectRoot(
 	"tests/modules/rust_wasm32_simple2/target/wasm32-unknown-unknown/debug/rust_wasm32_simple2.wasm",
 )
 
+// wasmPath3 contains a simple wasm32 assemblyScript lens that takes an item of `type2` and adds 10 to its age.
+var wasmPath3 string = getPathRelativeToProjectRoot(
+	"tests/modules/as_wasm32_simple/build/debug/as_wasm32_simple.wasm",
+)
+
 type type1 struct {
 	Name string
 	Age  int

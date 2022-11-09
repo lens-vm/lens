@@ -1,0 +1,17 @@
+{
+  "name": "as_wasm32_simple",
+  "main": "index.js",
+  "scripts": {
+    "asbuild:debug": "asb build --target debug",
+    "asbuild:release": "asb build --target release",
+    "asbuild": "npm run asbuild:debug && npm run asbuild:release"
+  },
+  "devDependencies": {
+    "asbuild": "^0.2.0",
+    "assemblyscript": "^0.22.0"
+  },
+  "type": "module",
+  "dependencies": {
+    "assemblyscript-json": "^1.1.0"
+  }
+}
