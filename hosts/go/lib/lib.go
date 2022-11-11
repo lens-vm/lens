@@ -9,12 +9,12 @@ import (
 	"github.com/wasmerio/wasmer-go/wasmer"
 )
 
-// AppendLens appends the given Module to the given source Enumerable, returning the result.
+// Append appends the given Module to the given source Enumerable, returning the result.
 //
 // It will try and find the optimal way to communicate between the source and the new module, returning an enumerable of a type
 // that best fits the situation. The source can be any type that implements the Enumerable interface, it does not need to be a
 // lens module.
-func AppendLens[TSource any, TResult any](src enumerable.Enumerable[TSource], module module.Module) enumerable.Enumerable[TResult] {
+func Append[TSource any, TResult any](src enumerable.Enumerable[TSource], module module.Module) enumerable.Enumerable[TResult] {
 	switch typedSrc := src.(type) {
 	case pipes.Pipe[TSource]:
 		return pipes.FromModuleAsFullToFull[TSource, TResult](typedSrc, module)

@@ -20,7 +20,7 @@ func TestWasm32PipelineFromSourceAsFull(t *testing.T) {
 	}
 	source := enumerable.New([]type1{input})
 
-	pipe := lib.AppendLens[type1, type2](source, module)
+	pipe := lib.Append[type1, type2](source, module)
 
 	hasNext, err := pipe.Next()
 	if err != nil {
@@ -56,8 +56,8 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFull(t *testing.T) {
 	}
 	source := enumerable.New([]type1{input})
 
-	pipe1 := lib.AppendLens[type1, type2](source, module1)
-	pipe2 := lib.AppendLens[type2, type2](pipe1, module2)
+	pipe1 := lib.Append[type1, type2](source, module1)
+	pipe2 := lib.Append[type2, type2](pipe1, module2)
 
 	hasNext, err := pipe2.Next()
 	if err != nil {
@@ -93,9 +93,9 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFullToModuleAsFull(t *testing.T
 	}
 	source := enumerable.New([]type1{input})
 
-	pipe1 := lib.AppendLens[type1, type2](source, module1)
-	pipe2 := lib.AppendLens[type2, type2](pipe1, module2)
-	pipe3 := lib.AppendLens[type2, type2](pipe2, module2)
+	pipe1 := lib.Append[type1, type2](source, module1)
+	pipe2 := lib.Append[type2, type2](pipe1, module2)
+	pipe3 := lib.Append[type2, type2](pipe2, module2)
 
 	hasNext, err := pipe3.Next()
 	if err != nil {
@@ -135,9 +135,9 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFullToASModuleAsFull(t *testing
 	}
 	source := enumerable.New([]type1{input})
 
-	pipe1 := lib.AppendLens[type1, type2](source, module1)
-	pipe2 := lib.AppendLens[type2, type2](pipe1, module2)
-	pipe3 := lib.AppendLens[type2, type2](pipe2, module3)
+	pipe1 := lib.Append[type1, type2](source, module1)
+	pipe2 := lib.Append[type2, type2](pipe1, module2)
+	pipe3 := lib.Append[type2, type2](pipe2, module3)
 
 	hasNext, err := pipe3.Next()
 	if err != nil {

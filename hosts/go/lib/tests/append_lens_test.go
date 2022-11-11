@@ -36,7 +36,7 @@ func TestAppendLensWithoutWasm(t *testing.T) {
 	source := enumerable.New(sourceSlice)
 
 	memory := make([]byte, math.MaxUint16)
-	results := lib.AppendLens[type1, type2](
+	results := lib.Append[type1, type2](
 		source,
 		module.Module{
 			Alloc: func(size module.MemSize) (module.MemSize, error) {
