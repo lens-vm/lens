@@ -19,20 +19,5 @@ type Module struct {
 	//
 	// This is very important when working with some libraries (such as wasmer-go), as without this dependencies of other members
 	// of this Module may be garbage collected prematurely.
-	ownedBy any
-}
-
-// New returns a new Module constructed using the given parameters.
-func New(
-	alloc func(MemSize) (MemSize, error),
-	transform func(MemSize, ...any) (MemSize, error),
-	getData func() []byte,
-	ownedBy any,
-) Module {
-	return Module{
-		Alloc:     alloc,
-		Transform: transform,
-		GetData:   getData,
-		ownedBy:   ownedBy,
-	}
+	OwnedBy any
 }

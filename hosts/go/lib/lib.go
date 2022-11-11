@@ -59,22 +59,22 @@ func LoadModule(path string) (module.Module, error) {
 		return module.Module{}, err
 	}
 
-	return module.New(
-		func(u module.MemSize) (module.MemSize, error) {
+	return module.Module{
+		Alloc: func(u module.MemSize) (module.MemSize, error) {
 			r, err := alloc.Call(u)
 			if err != nil {
 				return 0, err
 			}
 			return r.(module.MemSize), err
 		},
-		func(u module.MemSize, a ...any) (module.MemSize, error) {
+		Transform: func(u module.MemSize, a ...any) (module.MemSize, error) {
 			r, err := transform.Call(u)
 			if err != nil {
 				return 0, err
 			}
 			return r.(module.MemSize), err
 		},
-		memory.Data,
-		instance,
-	), nil
+		GetData: memory.Data,
+		OwnedBy: instance,
+	}, nil
 }
