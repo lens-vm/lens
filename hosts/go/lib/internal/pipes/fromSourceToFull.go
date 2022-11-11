@@ -55,7 +55,7 @@ func (s *fromSourceToFull[TSource, TResult]) Value() TResult {
 	return *result
 }
 
-func (s *fromSourceToFull[TSource, TResult]) Result() []byte {
+func (s *fromSourceToFull[TSource, TResult]) Bytes() []byte {
 	return getItem(s.module.GetData(), s.currentIndex)
 }
 

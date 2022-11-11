@@ -30,7 +30,7 @@ func (s *fromModuleAsFullToFull[TSource, TResult]) Next() (bool, error) {
 		return hasNext, err
 	}
 
-	value := s.source.Result()
+	value := s.source.Bytes()
 	// We do this here to keep the work (and errors) in the `Next` call
 	result, err := s.transport(value)
 	if err != nil {
@@ -54,7 +54,7 @@ func (s *fromModuleAsFullToFull[TSource, TResult]) Value() TResult {
 	return *result
 }
 
-func (s *fromModuleAsFullToFull[TSource, TResult]) Result() []byte {
+func (s *fromModuleAsFullToFull[TSource, TResult]) Bytes() []byte {
 	return getItem(s.module.GetData(), s.currentIndex)
 }
 

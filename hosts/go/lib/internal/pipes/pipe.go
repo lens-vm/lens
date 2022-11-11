@@ -7,7 +7,7 @@ import "lens-host/lib/enumerable"
 type Pipe[T any] interface {
 	enumerable.Enumerable[T]
 
-	// Result returns the current value of the enumerable as a byte array.  This includes
+	// Bytes returns the current value of the enumerable as a byte array.  This includes
 	// the length specifier.
-	Result() []byte
+	Bytes() []byte
 }
