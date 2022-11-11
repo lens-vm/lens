@@ -2,9 +2,10 @@ package lib
 
 import (
 	"io/ioutil"
-	"lens-host/lib/enumerable"
-	"lens-host/lib/internal/pipes"
-	"lens-host/lib/module"
+
+	"github.com/lens-vm/lens/host-go/lib/enumerable"
+	"github.com/lens-vm/lens/host-go/lib/internal/pipes"
+	"github.com/lens-vm/lens/host-go/lib/module"
 
 	"github.com/wasmerio/wasmer-go/wasmer"
 )

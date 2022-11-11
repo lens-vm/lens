@@ -2,8 +2,9 @@ package pipes
 
 import (
 	"encoding/json"
-	"lens-host/lib/enumerable"
-	"lens-host/lib/module"
+
+	"github.com/lens-vm/lens/host-go/lib/enumerable"
+	"github.com/lens-vm/lens/host-go/lib/module"
 )
 
 type fromSourceToFull[TSource any, TResult any] struct {

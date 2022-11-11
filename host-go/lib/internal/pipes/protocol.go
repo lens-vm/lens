@@ -3,7 +3,8 @@ package pipes
 import (
 	"bytes"
 	"encoding/binary"
-	"lens-host/lib/module"
+
+	"github.com/lens-vm/lens/host-go/lib/module"
 )
 
 // getItem returns the item at the given index.  This includes the length specifier.

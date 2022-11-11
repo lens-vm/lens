@@ -1,9 +1,10 @@
 package tests
 
 import (
-	"lens-host/lib"
-	"lens-host/lib/enumerable"
 	"testing"
+
+	"github.com/lens-vm/lens/host-go/lib"
+	"github.com/lens-vm/lens/host-go/lib/enumerable"
 
 	"github.com/stretchr/testify/assert"
 )

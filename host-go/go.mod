@@ -1,4 +1,4 @@
-module lens-host
+module github.com/lens-vm/lens/host-go
 
 go 1.18
 

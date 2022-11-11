@@ -1,6 +1,6 @@
 package pipes
 
-import "lens-host/lib/enumerable"
+import "github.com/lens-vm/lens/host-go/lib/enumerable"
 
 // Pipe extends the Enumerable interface to allow for more efficient communication between
 // lens modules.

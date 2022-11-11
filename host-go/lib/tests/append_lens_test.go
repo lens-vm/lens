@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
-	"lens-host/lib"
-	"lens-host/lib/enumerable"
-	"lens-host/lib/module"
 	"math"
 	"testing"
+
+	"github.com/lens-vm/lens/host-go/lib"
+	"github.com/lens-vm/lens/host-go/lib/enumerable"
+	"github.com/lens-vm/lens/host-go/lib/module"
 
 	"github.com/stretchr/testify/assert"
 )
