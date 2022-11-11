@@ -50,6 +50,8 @@ func (s *fromSourceToFull[TSource, TResult]) Value() TResult {
 	result := &t
 	err := json.Unmarshal([]byte(jsonStr), result)
 	if err != nil {
+		// TODO: We should return this instead of panicing
+		// https://github.com/sourcenetwork/lens/issues/10
 		panic(err)
 	}
 	return *result
