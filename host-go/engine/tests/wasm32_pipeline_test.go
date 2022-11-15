@@ -157,3 +157,44 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFullToASModuleAsFull(t *testing
 	}
 	assert.False(t, hasNext)
 }
+
+func TestWasm32PipelineFromSourceAsFullToModuleAsFullToModuleAsFullWithSingleAppend(t *testing.T) {
+	module1, err := engine.LoadModule(wasmPath1)
+	if err != nil {
+		t.Error(err)
+	}
+	module2, err := engine.LoadModule(wasmPath2)
+	if err != nil {
+		t.Error(err)
+	}
+
+	input := type1{
+		Name: "John",
+		Age:  32,
+	}
+	source := enumerable.New([]type1{input})
+
+	pipe := engine.Append[type1, type2](
+		source,
+		module1,
+		module2,
+		module2,
+	)
+
+	hasNext, err := pipe.Next()
+	if err != nil {
+		t.Error(err)
+	}
+	assert.True(t, hasNext)
+
+	assert.Equal(t, type2{
+		FullName: "John",
+		Age:      34,
+	}, pipe.Value())
+
+	hasNext, err = pipe.Next()
+	if err != nil {
+		t.Error(err)
+	}
+	assert.False(t, hasNext)
+}

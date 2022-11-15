@@ -10,12 +10,33 @@ import (
 	"github.com/wasmerio/wasmer-go/wasmer"
 )
 
-// Append appends the given Module to the given source Enumerable, returning the result.
+// Append appends the given Module(s) to the given source Enumerable, returning the result.
 //
 // It will try and find the optimal way to communicate between the source and the new module, returning an enumerable of a type
 // that best fits the situation. The source can be any type that implements the Enumerable interface, it does not need to be a
 // lens module.
-func Append[TSource any, TResult any](src enumerable.Enumerable[TSource], module module.Module) enumerable.Enumerable[TResult] {
+func Append[TSource any, TResult any](src enumerable.Enumerable[TSource], modules ...module.Module) enumerable.Enumerable[TResult] {
+	if len(modules) == 0 {
+		return src.(enumerable.Enumerable[TResult])
+	}
+
+	if len(modules) == 1 {
+		return append[TSource, TResult](src, modules[0])
+	}
+
+	var intermediarySource enumerable.Enumerable[map[string]any]
+	if len(modules) > 0 {
+		intermediarySource = append[TSource, map[string]any](src, modules[0])
+	}
+
+	for i := 1; i < len(modules)-1; i++ {
+		intermediarySource = append[map[string]any, map[string]any](intermediarySource, modules[i])
+	}
+
+	return append[map[string]any, TResult](intermediarySource, modules[len(modules)-1])
+}
+
+func append[TSource any, TResult any](src enumerable.Enumerable[TSource], module module.Module) enumerable.Enumerable[TResult] {
 	switch typedSrc := src.(type) {
 	case pipes.Pipe[TSource]:
 		return pipes.FromModuleAsFullToFull[TSource, TResult](typedSrc, module)
