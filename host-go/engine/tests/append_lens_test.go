@@ -7,9 +7,9 @@ import (
 	"math"
 	"testing"
 
-	"github.com/lens-vm/lens/host-go/lib"
-	"github.com/lens-vm/lens/host-go/lib/enumerable"
-	"github.com/lens-vm/lens/host-go/lib/module"
+	"github.com/lens-vm/lens/host-go/engine"
+	"github.com/lens-vm/lens/host-go/engine/enumerable"
+	"github.com/lens-vm/lens/host-go/engine/module"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -37,7 +37,7 @@ func TestAppendLensWithoutWasm(t *testing.T) {
 	source := enumerable.New(sourceSlice)
 
 	memory := make([]byte, math.MaxUint16)
-	results := lib.Append[type1, type2](
+	results := engine.Append[type1, type2](
 		source,
 		module.Module{
 			Alloc: func(size module.MemSize) (module.MemSize, error) {

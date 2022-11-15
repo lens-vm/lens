@@ -3,7 +3,7 @@ package pipes
 import (
 	"encoding/json"
 
-	"github.com/lens-vm/lens/host-go/lib/module"
+	"github.com/lens-vm/lens/host-go/engine/module"
 )
 
 type fromModuleAsFullToFull[TSource any, TResult any] struct {

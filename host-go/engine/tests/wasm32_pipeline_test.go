@@ -3,14 +3,14 @@ package tests
 import (
 	"testing"
 
-	"github.com/lens-vm/lens/host-go/lib"
-	"github.com/lens-vm/lens/host-go/lib/enumerable"
+	"github.com/lens-vm/lens/host-go/engine"
+	"github.com/lens-vm/lens/host-go/engine/enumerable"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestWasm32PipelineFromSourceAsFull(t *testing.T) {
-	module, err := lib.LoadModule(wasmPath1)
+	module, err := engine.LoadModule(wasmPath1)
 	if err != nil {
 		t.Error(err)
 	}
@@ -21,7 +21,7 @@ func TestWasm32PipelineFromSourceAsFull(t *testing.T) {
 	}
 	source := enumerable.New([]type1{input})
 
-	pipe := lib.Append[type1, type2](source, module)
+	pipe := engine.Append[type1, type2](source, module)
 
 	hasNext, err := pipe.Next()
 	if err != nil {
@@ -42,11 +42,11 @@ func TestWasm32PipelineFromSourceAsFull(t *testing.T) {
 }
 
 func TestWasm32PipelineFromSourceAsFullToModuleAsFull(t *testing.T) {
-	module1, err := lib.LoadModule(wasmPath1)
+	module1, err := engine.LoadModule(wasmPath1)
 	if err != nil {
 		t.Error(err)
 	}
-	module2, err := lib.LoadModule(wasmPath2)
+	module2, err := engine.LoadModule(wasmPath2)
 	if err != nil {
 		t.Error(err)
 	}
@@ -57,8 +57,8 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFull(t *testing.T) {
 	}
 	source := enumerable.New([]type1{input})
 
-	pipe1 := lib.Append[type1, type2](source, module1)
-	pipe2 := lib.Append[type2, type2](pipe1, module2)
+	pipe1 := engine.Append[type1, type2](source, module1)
+	pipe2 := engine.Append[type2, type2](pipe1, module2)
 
 	hasNext, err := pipe2.Next()
 	if err != nil {
@@ -79,11 +79,11 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFull(t *testing.T) {
 }
 
 func TestWasm32PipelineFromSourceAsFullToModuleAsFullToModuleAsFull(t *testing.T) {
-	module1, err := lib.LoadModule(wasmPath1)
+	module1, err := engine.LoadModule(wasmPath1)
 	if err != nil {
 		t.Error(err)
 	}
-	module2, err := lib.LoadModule(wasmPath2)
+	module2, err := engine.LoadModule(wasmPath2)
 	if err != nil {
 		t.Error(err)
 	}
@@ -94,9 +94,9 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFullToModuleAsFull(t *testing.T
 	}
 	source := enumerable.New([]type1{input})
 
-	pipe1 := lib.Append[type1, type2](source, module1)
-	pipe2 := lib.Append[type2, type2](pipe1, module2)
-	pipe3 := lib.Append[type2, type2](pipe2, module2)
+	pipe1 := engine.Append[type1, type2](source, module1)
+	pipe2 := engine.Append[type2, type2](pipe1, module2)
+	pipe3 := engine.Append[type2, type2](pipe2, module2)
 
 	hasNext, err := pipe3.Next()
 	if err != nil {
@@ -117,15 +117,15 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFullToModuleAsFull(t *testing.T
 }
 
 func TestWasm32PipelineFromSourceAsFullToModuleAsFullToASModuleAsFull(t *testing.T) {
-	module1, err := lib.LoadModule(wasmPath1)
+	module1, err := engine.LoadModule(wasmPath1)
 	if err != nil {
 		t.Error(err)
 	}
-	module2, err := lib.LoadModule(wasmPath2)
+	module2, err := engine.LoadModule(wasmPath2)
 	if err != nil {
 		t.Error(err)
 	}
-	module3, err := lib.LoadModule(wasmPath3)
+	module3, err := engine.LoadModule(wasmPath3)
 	if err != nil {
 		t.Error(err)
 	}
@@ -136,9 +136,9 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFullToASModuleAsFull(t *testing
 	}
 	source := enumerable.New([]type1{input})
 
-	pipe1 := lib.Append[type1, type2](source, module1)
-	pipe2 := lib.Append[type2, type2](pipe1, module2)
-	pipe3 := lib.Append[type2, type2](pipe2, module3)
+	pipe1 := engine.Append[type1, type2](source, module1)
+	pipe2 := engine.Append[type2, type2](pipe1, module2)
+	pipe3 := engine.Append[type2, type2](pipe2, module3)
 
 	hasNext, err := pipe3.Next()
 	if err != nil {

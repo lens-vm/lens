@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 
-	"github.com/lens-vm/lens/host-go/lib/module"
+	"github.com/lens-vm/lens/host-go/engine/module"
 )
 
 // getItem returns the item at the given index.  This includes the length specifier.
