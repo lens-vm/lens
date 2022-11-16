@@ -1,0 +1,9 @@
+tests/modules/rust_wasm32_simple/Cargo.lock
+tests/modules/rust_wasm32_simple/target
+tests/modules/rust_wasm32_simple/pkg
+tests/modules/rust_wasm32_simple2/Cargo.lock
+tests/modules/rust_wasm32_simple2/target
+tests/modules/rust_wasm32_simple2/pkg
+tests/modules/as_wasm32_simple/build
+tests/modules/as_wasm32_simple/node_modules
+tests/modules/as_wasm32_simple/package-lock.json
