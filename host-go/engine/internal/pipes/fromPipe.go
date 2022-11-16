@@ -6,26 +6,26 @@ import (
 	"github.com/lens-vm/lens/host-go/engine/module"
 )
 
-type fromModuleAsFullToFull[TSource any, TResult any] struct {
+type fromPipe[TSource any, TResult any] struct {
 	source Pipe[TSource]
 	module module.Module
 
 	currentIndex module.MemSize
 }
 
-func FromModuleAsFullToFull[TSource any, TResult any](
+func NewFromPipe[TSource any, TResult any](
 	source Pipe[TSource],
 	module module.Module,
 ) Pipe[TResult] {
-	return &fromModuleAsFullToFull[TSource, TResult]{
+	return &fromPipe[TSource, TResult]{
 		source: source,
 		module: module,
 	}
 }
 
-var _ Pipe[int] = (*fromModuleAsFullToFull[bool, int])(nil)
+var _ Pipe[int] = (*fromPipe[bool, int])(nil)
 
-func (s *fromModuleAsFullToFull[TSource, TResult]) Next() (bool, error) {
+func (s *fromPipe[TSource, TResult]) Next() (bool, error) {
 	hasNext, err := s.source.Next()
 	if !hasNext || err != nil {
 		return hasNext, err
@@ -42,7 +42,7 @@ func (s *fromModuleAsFullToFull[TSource, TResult]) Next() (bool, error) {
 	return true, nil
 }
 
-func (s *fromModuleAsFullToFull[TSource, TResult]) Value() TResult {
+func (s *fromPipe[TSource, TResult]) Value() TResult {
 	item := getItem(s.module.GetData(), s.currentIndex)
 	jsonStr := string(item[module.LenSize:])
 
@@ -57,15 +57,15 @@ func (s *fromModuleAsFullToFull[TSource, TResult]) Value() TResult {
 	return *result
 }
 
-func (s *fromModuleAsFullToFull[TSource, TResult]) Bytes() []byte {
+func (s *fromPipe[TSource, TResult]) Bytes() []byte {
 	return getItem(s.module.GetData(), s.currentIndex)
 }
 
-func (s *fromModuleAsFullToFull[TSource, TResult]) Reset() {
+func (s *fromPipe[TSource, TResult]) Reset() {
 	s.source.Reset()
 }
 
-func (s *fromModuleAsFullToFull[TSource, TResult]) transport(sourceItem []byte) (module.MemSize, error) {
+func (s *fromPipe[TSource, TResult]) transport(sourceItem []byte) (module.MemSize, error) {
 	index, err := s.module.Alloc(module.MemSize(len(sourceItem)))
 	if err != nil {
 		return 0, err

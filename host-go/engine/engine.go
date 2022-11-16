@@ -35,9 +35,9 @@ func Append[TSource any, TResult any](src enumerable.Enumerable[TSource], module
 func append[TSource any, TResult any](src enumerable.Enumerable[TSource], module module.Module) enumerable.Enumerable[TResult] {
 	switch typedSrc := src.(type) {
 	case pipes.Pipe[TSource]:
-		return pipes.FromModuleAsFullToFull[TSource, TResult](typedSrc, module)
+		return pipes.NewFromPipe[TSource, TResult](typedSrc, module)
 	default:
-		return pipes.FromSourceToFull[TSource, TResult](src, module)
+		return pipes.NewFromSource[TSource, TResult](src, module)
 	}
 }
 
