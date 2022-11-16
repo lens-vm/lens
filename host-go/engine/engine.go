@@ -24,11 +24,7 @@ func Append[TSource any, TResult any](src enumerable.Enumerable[TSource], module
 		return append[TSource, TResult](src, modules[0])
 	}
 
-	var intermediarySource enumerable.Enumerable[map[string]any]
-	if len(modules) > 0 {
-		intermediarySource = append[TSource, map[string]any](src, modules[0])
-	}
-
+	intermediarySource := append[TSource, map[string]any](src, modules[0])
 	for i := 1; i < len(modules)-1; i++ {
 		intermediarySource = append[map[string]any, map[string]any](intermediarySource, modules[i])
 	}
