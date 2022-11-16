@@ -2,14 +2,13 @@ package module
 
 import (
 	"encoding/binary"
-	"reflect"
 )
 
 // LenType is the type used to represent the byte length of an item transmitted to/from a lens module.
 type LenType uint32
 
 // LenSize is the size in bytes of `LenType`
-var LenSize = int32(reflect.TypeOf(LenType(0)).Size())
+var LenSize int32 = 4
 
 // LenByteOrder is the byte order in which the byte length is written to memory.
 //
