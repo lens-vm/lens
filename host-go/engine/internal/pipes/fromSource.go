@@ -55,6 +55,7 @@ func (s *fromSource[TSource, TResult]) Value() TResult {
 		// https://github.com/sourcenetwork/lens/issues/10
 		panic(err)
 	}
+
 	return *result
 }
 
@@ -77,7 +78,7 @@ func (s *fromSource[TSource, TResult]) transport(sourceItem TSource) (module.Mem
 		return 0, err
 	}
 
-	err = writeItem(sourceBytes, s.module.GetData()[index:])
+	err = WriteItem(sourceBytes, s.module.GetData()[index:])
 	if err != nil {
 		return 0, err
 	}

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"encoding/json"
 	"io/ioutil"
 
 	"github.com/lens-vm/lens/host-go/engine/enumerable"
@@ -42,7 +43,7 @@ func append[TSource any, TResult any](src enumerable.Enumerable[TSource], module
 }
 
 // LoadModule loads a lens at the given path.
-func LoadModule(path string) (module.Module, error) {
+func LoadModule(path string, params ...any) (module.Module, error) {
 	content, err := ioutil.ReadFile(path)
 	if err != nil {
 		return module.Module{}, err
@@ -77,6 +78,35 @@ func LoadModule(path string) (module.Module, error) {
 		return module.Module{}, err
 	}
 
+	if len(params) > 0 {
+		set_param, err := instance.Exports.GetRawFunction("set_param")
+		if err != nil {
+			return module.Module{}, err
+		}
+
+		for i, param := range params {
+			sourceBytes, err := json.Marshal(param)
+			if err != nil {
+				return module.Module{}, err
+			}
+
+			index, err := alloc.Call(module.MemSize(len(sourceBytes)) + module.LenSize)
+			if err != nil {
+				return module.Module{}, err
+			}
+
+			err = pipes.WriteItem(sourceBytes, memory.Data()[index.(module.MemSize):])
+			if err != nil {
+				return module.Module{}, err
+			}
+
+			_, err = set_param.Call(int32(i), index)
+			if err != nil {
+				return module.Module{}, err
+			}
+		}
+	}
+
 	return module.Module{
 		Alloc: func(u module.MemSize) (module.MemSize, error) {
 			r, err := alloc.Call(u)
@@ -85,7 +115,7 @@ func LoadModule(path string) (module.Module, error) {
 			}
 			return r.(module.MemSize), err
 		},
-		Transform: func(u module.MemSize, a ...any) (module.MemSize, error) {
+		Transform: func(u module.MemSize) (module.MemSize, error) {
 			r, err := transform.Call(u)
 			if err != nil {
 				return 0, err
