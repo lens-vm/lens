@@ -3,4 +3,6 @@ go 1.18
 use (
 	./host-go
 	./tests/modules
+	./tests/hosts/host-go
+	./tests/integration
 )

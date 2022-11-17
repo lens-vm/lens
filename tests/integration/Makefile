@@ -1,0 +1,3 @@
+test:
+	$(MAKE) -C ../hosts/host-go build
+	go test ./...
