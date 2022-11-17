@@ -79,7 +79,7 @@ func LoadModule(path string, params ...any) (module.Module, error) {
 	}
 
 	if len(params) > 0 {
-		set_param, err := instance.Exports.GetRawFunction("set_param")
+		setParam, err := instance.Exports.GetRawFunction("set_param")
 		if err != nil {
 			return module.Module{}, err
 		}
@@ -100,7 +100,7 @@ func LoadModule(path string, params ...any) (module.Module, error) {
 				return module.Module{}, err
 			}
 
-			_, err = set_param.Call(int32(i), index)
+			_, err = setParam.Call(int32(i), index)
 			if err != nil {
 				return module.Module{}, err
 			}
