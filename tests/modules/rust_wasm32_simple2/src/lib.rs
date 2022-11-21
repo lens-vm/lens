@@ -1,4 +1,5 @@
 use std::mem;
+use std::mem::ManuallyDrop;
 use std::io::Cursor;
 use std::convert::TryInto;
 use serde::{Serialize, Deserialize};
@@ -45,16 +46,23 @@ fn from_transport_vec(ptr: *mut u8) -> String {
     let len_vec: Vec<u8> = unsafe {
         Vec::from_raw_parts(ptr, mem::size_of::<u32>(), mem::size_of::<u32>())
     };
-    let mut rdr = Cursor::new(len_vec);
-    let len = rdr.read_u32::<LittleEndian>().unwrap().try_into().unwrap();
 
-    mem::forget(rdr);
+    let rdr = Cursor::new(len_vec);
+    let mut rdr = ManuallyDrop::new(rdr);
+
+    let len: usize = rdr.read_u32::<LittleEndian>().unwrap().try_into().unwrap();
 
     let input_vec: Vec<u8> = unsafe {
         Vec::from_raw_parts(ptr.add(mem::size_of::<u32>()), len, len)
     };
+    let input_vec = ManuallyDrop::new(input_vec);
     
-    String::from_utf8(input_vec).unwrap()
+    let result = String::from_utf8(input_vec.to_vec()).unwrap().clone();
+
+    mem::drop(input_vec);
+    mem::drop(rdr);
+
+    result
 }
 
 // we send length-declared strings, not null terminated strings as it makes for safer mem-operations and a slimmer interface

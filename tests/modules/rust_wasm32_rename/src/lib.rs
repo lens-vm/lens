@@ -2,24 +2,12 @@ use std::mem;
 use std::mem::ManuallyDrop;
 use std::io::Cursor;
 use std::convert::TryInto;
-use serde::{Serialize, Deserialize};
+use std::collections::HashMap;
+use std::sync::RwLock;
 use byteorder::{ReadBytesExt, WriteBytesExt, LittleEndian};
 
-#[derive(Deserialize)]
-pub struct Input {
-    #[serde(rename(deserialize = "Name"))]
-    pub name: String,
-    #[serde(rename(deserialize = "Age"))]
-	pub age: u64,
-}
-
-#[derive(Serialize)]
-pub struct Result {
-    #[serde(rename(serialize = "FullName"))]
-    pub full_name: String,
-    #[serde(rename(serialize = "Age"))]
-	pub age: u64,
-}
+static SRC_PARAM: RwLock<Option<String>> = RwLock::new(None);
+static DST_PARAM: RwLock<Option<String>> = RwLock::new(None);
 
 #[no_mangle]
 pub extern fn alloc(size: usize) -> *mut u8 {
@@ -30,24 +18,41 @@ pub extern fn alloc(size: usize) -> *mut u8 {
 }
 
 #[no_mangle]
+pub extern fn set_param(id: u32, ptr: *mut u8) {
+    let input_str = from_transport_vec(ptr);
+    let input_str = serde_json::from_str::<String>(&input_str).unwrap();
+
+    let dst_lock = match id {
+        0 => &SRC_PARAM,
+        1 => &DST_PARAM,
+        _ => panic!("gdfhsand")
+    };
+
+    let mut dst = dst_lock.write().unwrap();
+    *dst = Some(input_str);
+}
+
+#[no_mangle]
 pub extern fn transform(ptr: *mut u8) -> *mut u8 {
     let input_str = from_transport_vec(ptr);
-    let r = serde_json::from_str::<Input>(&input_str.clone());
-    let input = match r {
-        Ok(i) => i,
+    let r = serde_json::from_str::<HashMap<String, serde_json::Value>>(&input_str);
+
+    let mut input = match r {
+        Ok(i) => i.clone(),
         Err(e) => {
             let message = format!("{}", e);
             return to_transport_vec(&message.as_bytes()).as_mut_ptr()
         },
     };
+
+    let src_param = SRC_PARAM.read().unwrap().clone().unwrap();
+    let value = input.get_mut(&src_param).unwrap().clone();
     
-    let result = Result {
-        full_name: input.name,
-        age: input.age,
-    };
+    input.remove(&src_param.clone());
+    input.insert(DST_PARAM.read().unwrap().clone().unwrap().clone(), value);
     
-    let result_json = serde_json::to_vec(&result).unwrap();
-    to_transport_vec(&result_json).as_mut_ptr()
+    let result_json = serde_json::to_vec(&input).unwrap();
+    to_transport_vec(&result_json.clone()).as_mut_ptr()
 }
 
 fn from_transport_vec(ptr: *mut u8) -> String {

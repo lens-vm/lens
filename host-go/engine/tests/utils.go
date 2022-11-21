@@ -20,6 +20,11 @@ var wasmPath3 string = getPathRelativeToProjectRoot(
 	"tests/modules/as_wasm32_simple/build/debug/as_wasm32_simple.wasm",
 )
 
+// wasmPath4 contains a wasm32 rust lens that takes two additional properties and a map and renames one of the properties.
+var wasmPath4 string = getPathRelativeToProjectRoot(
+	"/tests/modules/rust_wasm32_rename/target/wasm32-unknown-unknown/debug/rust_wasm32_rename.wasm",
+)
+
 type type1 struct {
 	Name string
 	Age  int

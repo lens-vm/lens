@@ -7,3 +7,6 @@ tests/modules/rust_wasm32_simple2/pkg
 tests/modules/as_wasm32_simple/build
 tests/modules/as_wasm32_simple/node_modules
 tests/modules/as_wasm32_simple/package-lock.json
+tests/modules/rust_wasm32_rename/Cargo.lock
+tests/modules/rust_wasm32_rename/target
+tests/modules/rust_wasm32_rename/pkg

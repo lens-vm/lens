@@ -44,7 +44,7 @@ func TestAppendLensWithoutWasm(t *testing.T) {
 				var arbitraryIndex module.MemSize = 5
 				return arbitraryIndex, nil
 			},
-			Transform: func(startIndex module.MemSize, additionalParams ...any) (module.MemSize, error) {
+			Transform: func(startIndex module.MemSize) (module.MemSize, error) {
 				resultBuffer := make([]byte, module.LenSize)
 				copy(resultBuffer, memory[startIndex:startIndex+module.LenSize])
 				var inputLen module.LenType

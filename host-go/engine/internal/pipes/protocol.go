@@ -20,9 +20,9 @@ func getItem(src []byte, startIndex module.MemSize) []byte {
 	return src[startIndex : startIndex+module.MemSize(len)+module.LenSize]
 }
 
-// writeItem calculates the length specifier for the given source object and then writes both specifier
+// WriteItem calculates the length specifier for the given source object and then writes both specifier
 // and item to the destination.
-func writeItem(src []byte, dst []byte) error {
+func WriteItem(src []byte, dst []byte) error {
 	len := module.LenType(len(src))
 	writer := bytes.NewBuffer([]byte{})
 	err := binary.Write(writer, module.LenByteOrder, len)
