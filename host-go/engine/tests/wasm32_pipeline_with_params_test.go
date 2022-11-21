@@ -5,12 +5,13 @@ import (
 
 	"github.com/lens-vm/lens/host-go/engine"
 	"github.com/lens-vm/lens/host-go/engine/enumerable"
+	"github.com/lens-vm/lens/tests/modules"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestWasm32PipelineWithAddtionalParams(t *testing.T) {
-	module, err := engine.LoadModule(wasmPath4, "Name", "FullName")
+	module, err := engine.LoadModule(modules.WasmPath4, "Name", "FullName")
 	if err != nil {
 		t.Error(err)
 	}
@@ -42,12 +43,12 @@ func TestWasm32PipelineWithAddtionalParams(t *testing.T) {
 }
 
 func TestWasm32PipelineMultipleModulesAndWithAddtionalParams(t *testing.T) {
-	module1, err := engine.LoadModule(wasmPath4, "Name", "FirstName")
+	module1, err := engine.LoadModule(modules.WasmPath4, "Name", "FirstName")
 	if err != nil {
 		t.Error(err)
 	}
 
-	module2, err := engine.LoadModule(wasmPath4, "FirstName", "FullName")
+	module2, err := engine.LoadModule(modules.WasmPath4, "FirstName", "FullName")
 	if err != nil {
 		t.Error(err)
 	}
@@ -83,7 +84,7 @@ func TestWasm32PipelineMultipleModulesAndWithAddtionalParams(t *testing.T) {
 }
 
 func TestWasm32PipelineWithAddtionalParamsErrors(t *testing.T) {
-	module, err := engine.LoadModule(wasmPath4, "NotAField", "FullName")
+	module, err := engine.LoadModule(modules.WasmPath4, "NotAField", "FullName")
 	if err != nil {
 		t.Error(err)
 	}

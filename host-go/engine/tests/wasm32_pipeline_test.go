@@ -5,12 +5,13 @@ import (
 
 	"github.com/lens-vm/lens/host-go/engine"
 	"github.com/lens-vm/lens/host-go/engine/enumerable"
+	"github.com/lens-vm/lens/tests/modules"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestWasm32PipelineFromSourceAsFull(t *testing.T) {
-	module, err := engine.LoadModule(wasmPath1)
+	module, err := engine.LoadModule(modules.WasmPath1)
 	if err != nil {
 		t.Error(err)
 	}
@@ -42,11 +43,11 @@ func TestWasm32PipelineFromSourceAsFull(t *testing.T) {
 }
 
 func TestWasm32PipelineFromSourceAsFullToModuleAsFull(t *testing.T) {
-	module1, err := engine.LoadModule(wasmPath1)
+	module1, err := engine.LoadModule(modules.WasmPath1)
 	if err != nil {
 		t.Error(err)
 	}
-	module2, err := engine.LoadModule(wasmPath2)
+	module2, err := engine.LoadModule(modules.WasmPath2)
 	if err != nil {
 		t.Error(err)
 	}
@@ -79,11 +80,11 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFull(t *testing.T) {
 }
 
 func TestWasm32PipelineFromSourceAsFullToModuleAsFullToModuleAsFull(t *testing.T) {
-	module1, err := engine.LoadModule(wasmPath1)
+	module1, err := engine.LoadModule(modules.WasmPath1)
 	if err != nil {
 		t.Error(err)
 	}
-	module2, err := engine.LoadModule(wasmPath2)
+	module2, err := engine.LoadModule(modules.WasmPath2)
 	if err != nil {
 		t.Error(err)
 	}
@@ -117,15 +118,15 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFullToModuleAsFull(t *testing.T
 }
 
 func TestWasm32PipelineFromSourceAsFullToModuleAsFullToASModuleAsFull(t *testing.T) {
-	module1, err := engine.LoadModule(wasmPath1)
+	module1, err := engine.LoadModule(modules.WasmPath1)
 	if err != nil {
 		t.Error(err)
 	}
-	module2, err := engine.LoadModule(wasmPath2)
+	module2, err := engine.LoadModule(modules.WasmPath2)
 	if err != nil {
 		t.Error(err)
 	}
-	module3, err := engine.LoadModule(wasmPath3)
+	module3, err := engine.LoadModule(modules.WasmPath3)
 	if err != nil {
 		t.Error(err)
 	}
@@ -159,11 +160,11 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFullToASModuleAsFull(t *testing
 }
 
 func TestWasm32PipelineFromSourceAsFullToModuleAsFullToModuleAsFullWithSingleAppend(t *testing.T) {
-	module1, err := engine.LoadModule(wasmPath1)
+	module1, err := engine.LoadModule(modules.WasmPath1)
 	if err != nil {
 		t.Error(err)
 	}
-	module2, err := engine.LoadModule(wasmPath2)
+	module2, err := engine.LoadModule(modules.WasmPath2)
 	if err != nil {
 		t.Error(err)
 	}
