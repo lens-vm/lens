@@ -2,7 +2,7 @@ package json
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 
 	"github.com/lens-vm/lens/host-go/config/internal/model"
 )
@@ -17,7 +17,7 @@ type LensModule struct {
 }
 
 func Load(path string) (model.Lens, error) {
-	lensFileJson, err := ioutil.ReadFile(path)
+	lensFileJson, err := os.ReadFile(path)
 	if err != nil {
 		return model.Lens{}, err
 	}

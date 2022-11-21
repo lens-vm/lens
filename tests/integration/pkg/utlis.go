@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -40,7 +39,10 @@ func getPathRelativeToProjectRoot(relativePath string) string {
 func executeTest[TSource any, TResult any](t *testing.T, testCase TestCase[TSource, TResult]) {
 	tempDir := t.TempDir()
 	lensFilePath := path.Join(tempDir, "lenseFile.json")
-	ioutil.WriteFile(lensFilePath, []byte(testCase.LensFile), 0700)
+	err := os.WriteFile(lensFilePath, []byte(testCase.LensFile), 0700)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	inputBytes, err := json.Marshal(testCase.Input)
 	if err != nil {

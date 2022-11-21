@@ -2,7 +2,7 @@ package engine
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 
 	"github.com/lens-vm/lens/host-go/engine/enumerable"
 	"github.com/lens-vm/lens/host-go/engine/internal/pipes"
@@ -44,7 +44,7 @@ func append[TSource any, TResult any](src enumerable.Enumerable[TSource], module
 
 // LoadModule loads a lens at the given path.
 func LoadModule(path string, params ...any) (module.Module, error) {
-	content, err := ioutil.ReadFile(path)
+	content, err := os.ReadFile(path)
 	if err != nil {
 		return module.Module{}, err
 	}
