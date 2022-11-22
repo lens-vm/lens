@@ -12,8 +12,8 @@ func getItem(src []byte, startIndex module.MemSize) []byte {
 	lenBuffer := make([]byte, module.LenSize)
 	copy(lenBuffer, src[startIndex:startIndex+module.LenSize])
 	var len module.LenType
-	buf := bytes.NewReader(lenBuffer)
-	_ = binary.Read(buf, module.LenByteOrder, &len)
+	reader := bytes.NewReader(lenBuffer)
+	_ = binary.Read(reader, module.LenByteOrder, &len)
 
 	// todo - the end index of this is untested, as it will only affect performance atm if it is longer than desired
 	// unless it overwrites adjacent stuff
