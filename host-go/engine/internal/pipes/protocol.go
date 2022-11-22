@@ -9,10 +9,10 @@ import (
 
 // getItem returns the item at the given index.  This includes the length specifier.
 func getItem(src []byte, startIndex module.MemSize) []byte {
-	resultBuffer := make([]byte, module.LenSize)
-	copy(resultBuffer, src[startIndex:startIndex+module.LenSize])
+	lenBuffer := make([]byte, module.LenSize)
+	copy(lenBuffer, src[startIndex:startIndex+module.LenSize])
 	var len module.LenType
-	buf := bytes.NewReader(resultBuffer)
+	buf := bytes.NewReader(lenBuffer)
 	_ = binary.Read(buf, module.LenByteOrder, &len)
 
 	// todo - the end index of this is untested, as it will only affect performance atm if it is longer than desired
