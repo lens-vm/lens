@@ -90,12 +90,12 @@ func LoadModule(path string, params ...any) (module.Module, error) {
 				return module.Module{}, err
 			}
 
-			index, err := alloc.Call(module.MemSize(len(sourceBytes)) + module.LenSize)
+			index, err := alloc.Call(module.TypeIdSize + module.MemSize(len(sourceBytes)) + module.LenSize)
 			if err != nil {
 				return module.Module{}, err
 			}
 
-			err = pipes.WriteItem(sourceBytes, memory.Data()[index.(module.MemSize):])
+			err = pipes.WriteItem(module.JSONTypeID, sourceBytes, memory.Data()[index.(module.MemSize):])
 			if err != nil {
 				return module.Module{}, err
 			}

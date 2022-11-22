@@ -53,7 +53,7 @@ func (s *fromPipe[TSource, TResult]) Value() TResult {
 		// https://github.com/sourcenetwork/lens/issues/10
 		panic(err)
 	}
-	jsonStr := string(item[module.LenSize:])
+	jsonStr := string(item[module.TypeIdSize+module.LenSize:])
 
 	var t TResult
 	result := &t

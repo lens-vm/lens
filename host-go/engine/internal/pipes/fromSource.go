@@ -50,7 +50,7 @@ func (s *fromSource[TSource, TResult]) Value() TResult {
 		// https://github.com/sourcenetwork/lens/issues/10
 		panic(err)
 	}
-	jsonStr := string(item[module.LenSize:])
+	jsonStr := string(item[module.TypeIdSize+module.LenSize:])
 
 	var t TResult
 	result := &t
@@ -78,12 +78,12 @@ func (s *fromSource[TSource, TResult]) transport(sourceItem TSource) (module.Mem
 		return 0, err
 	}
 
-	index, err := s.module.Alloc(module.MemSize(len(sourceBytes)) + module.LenSize)
+	index, err := s.module.Alloc(module.TypeIdSize + module.MemSize(len(sourceBytes)) + module.LenSize)
 	if err != nil {
 		return 0, err
 	}
 
-	err = WriteItem(sourceBytes, s.module.GetData()[index:])
+	err = WriteItem(module.JSONTypeID, sourceBytes, s.module.GetData()[index:])
 	if err != nil {
 		return 0, err
 	}
