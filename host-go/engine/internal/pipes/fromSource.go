@@ -44,12 +44,17 @@ func (s *fromSource[TSource, TResult]) Next() (bool, error) {
 }
 
 func (s *fromSource[TSource, TResult]) Value() TResult {
-	item := getItem(s.module.GetData(), s.currentIndex)
+	item, err := getItem(s.module.GetData(), s.currentIndex)
+	if err != nil {
+		// TODO: We should return this instead of panicing
+		// https://github.com/sourcenetwork/lens/issues/10
+		panic(err)
+	}
 	jsonStr := string(item[module.LenSize:])
 
 	var t TResult
 	result := &t
-	err := json.Unmarshal([]byte(jsonStr), result)
+	err = json.Unmarshal([]byte(jsonStr), result)
 	if err != nil {
 		// TODO: We should return this instead of panicing
 		// https://github.com/sourcenetwork/lens/issues/10
@@ -59,7 +64,7 @@ func (s *fromSource[TSource, TResult]) Value() TResult {
 	return *result
 }
 
-func (s *fromSource[TSource, TResult]) Bytes() []byte {
+func (s *fromSource[TSource, TResult]) Bytes() ([]byte, error) {
 	return getItem(s.module.GetData(), s.currentIndex)
 }
 

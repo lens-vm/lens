@@ -31,7 +31,11 @@ func (s *fromPipe[TSource, TResult]) Next() (bool, error) {
 		return hasNext, err
 	}
 
-	value := s.source.Bytes()
+	value, err := s.source.Bytes()
+	if err != nil {
+		return false, nil
+	}
+
 	// We do this here to keep the work (and errors) in the `Next` call
 	result, err := s.transport(value)
 	if err != nil {
@@ -43,12 +47,17 @@ func (s *fromPipe[TSource, TResult]) Next() (bool, error) {
 }
 
 func (s *fromPipe[TSource, TResult]) Value() TResult {
-	item := getItem(s.module.GetData(), s.currentIndex)
+	item, err := getItem(s.module.GetData(), s.currentIndex)
+	if err != nil {
+		// TODO: We should return this instead of panicing
+		// https://github.com/sourcenetwork/lens/issues/10
+		panic(err)
+	}
 	jsonStr := string(item[module.LenSize:])
 
 	var t TResult
 	result := &t
-	err := json.Unmarshal([]byte(jsonStr), result)
+	err = json.Unmarshal([]byte(jsonStr), result)
 	if err != nil {
 		// TODO: We should return this instead of panicing
 		// https://github.com/sourcenetwork/lens/issues/10
@@ -57,7 +66,7 @@ func (s *fromPipe[TSource, TResult]) Value() TResult {
 	return *result
 }
 
-func (s *fromPipe[TSource, TResult]) Bytes() []byte {
+func (s *fromPipe[TSource, TResult]) Bytes() ([]byte, error) {
 	return getItem(s.module.GetData(), s.currentIndex)
 }
 

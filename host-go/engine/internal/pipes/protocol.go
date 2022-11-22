@@ -8,16 +8,19 @@ import (
 )
 
 // getItem returns the item at the given index.  This includes the length specifier.
-func getItem(src []byte, startIndex module.MemSize) []byte {
+func getItem(src []byte, startIndex module.MemSize) ([]byte, error) {
 	lenBuffer := make([]byte, module.LenSize)
 	copy(lenBuffer, src[startIndex:startIndex+module.LenSize])
 	var len module.LenType
 	reader := bytes.NewReader(lenBuffer)
-	_ = binary.Read(reader, module.LenByteOrder, &len)
+	err := binary.Read(reader, module.LenByteOrder, &len)
+	if err != nil {
+		return nil, err
+	}
 
 	// todo - the end index of this is untested, as it will only affect performance atm if it is longer than desired
 	// unless it overwrites adjacent stuff
-	return src[startIndex : startIndex+module.MemSize(len)+module.LenSize]
+	return src[startIndex : startIndex+module.MemSize(len)+module.LenSize], nil
 }
 
 // WriteItem calculates the length specifier for the given source object and then writes both specifier
