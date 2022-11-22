@@ -27,13 +27,13 @@ func getItem(src []byte, startIndex module.MemSize) ([]byte, error) {
 // and item to the destination.
 func WriteItem(src []byte, dst []byte) error {
 	len := module.LenType(len(src))
-	writer := bytes.NewBuffer([]byte{})
-	err := binary.Write(writer, module.LenByteOrder, len)
+	lenWriter := bytes.NewBuffer([]byte{})
+	err := binary.Write(lenWriter, module.LenByteOrder, len)
 	if err != nil {
 		return err
 	}
 
-	copy(dst, writer.Bytes())
+	copy(dst, lenWriter.Bytes())
 	copy(dst[module.LenSize:], src)
 
 	return nil
