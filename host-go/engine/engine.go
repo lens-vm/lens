@@ -43,7 +43,7 @@ func append[TSource any, TResult any](src enumerable.Enumerable[TSource], module
 }
 
 // LoadModule loads a lens at the given path.
-func LoadModule(path string, params ...any) (module.Module, error) {
+func LoadModule(path string, paramSets ...map[string]any) (module.Module, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return module.Module{}, err
@@ -78,32 +78,39 @@ func LoadModule(path string, params ...any) (module.Module, error) {
 		return module.Module{}, err
 	}
 
+	params := map[string]any{}
+	// Merge the param sets into a single map in case more than
+	// one map is provided.
+	for _, paramSet := range paramSets {
+		for key, value := range paramSet {
+			params[key] = value
+		}
+	}
+
 	if len(params) > 0 {
 		setParam, err := instance.Exports.GetRawFunction("set_param")
 		if err != nil {
 			return module.Module{}, err
 		}
 
-		for i, param := range params {
-			sourceBytes, err := json.Marshal(param)
-			if err != nil {
-				return module.Module{}, err
-			}
+		sourceBytes, err := json.Marshal(params)
+		if err != nil {
+			return module.Module{}, err
+		}
 
-			index, err := alloc.Call(module.TypeIdSize + module.MemSize(len(sourceBytes)) + module.LenSize)
-			if err != nil {
-				return module.Module{}, err
-			}
+		index, err := alloc.Call(module.TypeIdSize + module.MemSize(len(sourceBytes)) + module.LenSize)
+		if err != nil {
+			return module.Module{}, err
+		}
 
-			err = pipes.WriteItem(module.JSONTypeID, sourceBytes, memory.Data()[index.(module.MemSize):])
-			if err != nil {
-				return module.Module{}, err
-			}
+		err = pipes.WriteItem(module.JSONTypeID, sourceBytes, memory.Data()[index.(module.MemSize):])
+		if err != nil {
+			return module.Module{}, err
+		}
 
-			_, err = setParam.Call(int32(i), index)
-			if err != nil {
-				return module.Module{}, err
-			}
+		_, err = setParam.Call(index)
+		if err != nil {
+			return module.Module{}, err
 		}
 	}
 

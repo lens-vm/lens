@@ -4,13 +4,19 @@ use std::io::{Cursor, Write};
 use std::convert::TryInto;
 use std::collections::HashMap;
 use std::sync::RwLock;
+use serde::Deserialize;
 use byteorder::{ReadBytesExt, WriteBytesExt, LittleEndian};
+
+#[derive(Deserialize, Clone)]
+pub struct Parameters {
+    pub src: String,
+    pub dst: String,
+}
 
 const ERROR_TYPE_ID: i8 = -1;
 const JSON_TYPE_ID: i8 = 1;
 
-static SRC_PARAM: RwLock<Option<String>> = RwLock::new(None);
-static DST_PARAM: RwLock<Option<String>> = RwLock::new(None);
+static PARAMETERS: RwLock<Option<Parameters>> = RwLock::new(None);
 
 #[no_mangle]
 pub extern fn alloc(size: usize) -> *mut u8 {
@@ -21,17 +27,11 @@ pub extern fn alloc(size: usize) -> *mut u8 {
 }
 
 #[no_mangle]
-pub extern fn set_param(id: u32, ptr: *mut u8) {
+pub extern fn set_param(ptr: *mut u8) {
     let input_str = from_transport_vec(ptr);
-    let input_str = serde_json::from_str::<String>(&input_str).unwrap();
+    let input_str = serde_json::from_str::<Parameters>(&input_str).unwrap();
 
-    let dst_lock = match id {
-        0 => &SRC_PARAM,
-        1 => &DST_PARAM,
-        _ => panic!("gdfhsand")
-    };
-
-    let mut dst = dst_lock.write().unwrap();
+    let mut dst = PARAMETERS.write().unwrap();
     *dst = Some(input_str);
 }
 
@@ -48,17 +48,17 @@ pub extern fn transform(ptr: *mut u8) -> *mut u8 {
         },
     };
 
-    let src_param = SRC_PARAM.read().unwrap().clone().unwrap();
-    let value = match input.get_mut(&src_param) {
+    let params = PARAMETERS.read().unwrap().clone().unwrap();
+    let value = match input.get_mut(&params.src) {
         Some(i) => i.clone(),
         None => {
-            let message = format!("{} was not found", src_param);
+            let message = format!("{} was not found", params.src);
             return to_transport_vec(ERROR_TYPE_ID, &message.as_bytes()).as_mut_ptr()
         },
     };
     
-    input.remove(&src_param.clone());
-    input.insert(DST_PARAM.read().unwrap().clone().unwrap().clone(), value);
+    input.remove(&params.src);
+    input.insert(params.dst, value);
     
     let result_json = serde_json::to_vec(&input).unwrap();
     to_transport_vec(JSON_TYPE_ID, &result_json.clone()).as_mut_ptr()

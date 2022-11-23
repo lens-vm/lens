@@ -17,5 +17,5 @@ type LensModule struct {
 	// Any additional parameters that you wish to be passed to the lens transform.
 	//
 	// The lens module must expose a `set_param` function if values are provided here.
-	Arguments []any
+	Arguments map[string]any
 }
