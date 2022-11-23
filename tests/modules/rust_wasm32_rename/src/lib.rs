@@ -1,11 +1,9 @@
 use std::mem;
-use std::mem::ManuallyDrop;
 use std::io::{Cursor, Write};
-use std::convert::TryInto;
 use std::collections::HashMap;
 use std::sync::RwLock;
 use serde::Deserialize;
-use byteorder::{ReadBytesExt, WriteBytesExt, LittleEndian};
+use byteorder::{WriteBytesExt, LittleEndian};
 
 #[derive(Deserialize, Clone)]
 pub struct Parameters {
@@ -25,25 +23,15 @@ pub extern fn alloc(size: usize) -> *mut u8 {
 
 #[no_mangle]
 pub extern fn set_param(ptr: *mut u8) {
-    let input_str = from_transport_vec(ptr);
-    let input_str = serde_json::from_str::<Parameters>(&input_str).unwrap();
+    let parameter = lens_sdk::from_transport_vec::<Parameters>(ptr);
 
     let mut dst = PARAMETERS.write().unwrap();
-    *dst = Some(input_str);
+    *dst = Some(parameter);
 }
 
 #[no_mangle]
 pub extern fn transform(ptr: *mut u8) -> *mut u8 {
-    let input_str = from_transport_vec(ptr);
-    let r = serde_json::from_str::<HashMap<String, serde_json::Value>>(&input_str);
-
-    let mut input = match r {
-        Ok(i) => i.clone(),
-        Err(e) => {
-            let message = format!("{}", e);
-            return to_transport_vec(ERROR_TYPE_ID, &message.as_bytes()).as_mut_ptr()
-        },
-    };
+    let mut input = lens_sdk::from_transport_vec::<HashMap<String, serde_json::Value>>(ptr);
 
     let params = PARAMETERS.read().unwrap().clone().unwrap();
     let value = match input.get_mut(&params.src) {
@@ -59,42 +47,6 @@ pub extern fn transform(ptr: *mut u8) -> *mut u8 {
     
     let result_json = serde_json::to_vec(&input).unwrap();
     to_transport_vec(JSON_TYPE_ID, &result_json.clone()).as_mut_ptr()
-}
-
-fn from_transport_vec(ptr: *mut u8) -> String {
-    let type_vec: Vec<u8> = unsafe {
-        Vec::from_raw_parts(ptr, mem::size_of::<i8>(), mem::size_of::<i8>())
-    };
-
-    let type_rdr = Cursor::new(type_vec);
-    let mut type_rdr = ManuallyDrop::new(type_rdr);
-
-    let type_id: i8  = type_rdr.read_i8().unwrap().try_into().unwrap();
-    if type_id <= 0 {
-        panic!("todo - we only support type > 0 atm, return error")
-    }
-
-    let len_vec: Vec<u8> = unsafe {
-        Vec::from_raw_parts(ptr.add(mem::size_of::<i8>()), mem::size_of::<u32>(), mem::size_of::<u32>())
-    };
-
-    let len_rdr = Cursor::new(len_vec);
-    let mut len_rdr = ManuallyDrop::new(len_rdr);
-
-    let len: usize = len_rdr.read_u32::<LittleEndian>().unwrap().try_into().unwrap();
-
-    let input_vec: Vec<u8> = unsafe {
-        Vec::from_raw_parts(ptr.add(mem::size_of::<i8>()+mem::size_of::<u32>()), len, len)
-    };
-    let input_vec = ManuallyDrop::new(input_vec);
-    
-    let result = String::from_utf8(input_vec.to_vec()).unwrap().clone();
-
-    mem::drop(input_vec);
-    mem::drop(len_rdr);
-    mem::drop(type_rdr);
-
-    result
 }
 
 // we send length-declared strings, not null terminated strings as it makes for safer mem-operations and a slimmer interface

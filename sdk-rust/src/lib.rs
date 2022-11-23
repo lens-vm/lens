@@ -1,4 +1,8 @@
 use std::mem;
+use std::mem::ManuallyDrop;
+use std::io::Cursor;
+use serde::Deserialize;
+use byteorder::{ReadBytesExt, LittleEndian};
 
 /// Allocate the given `size` number of bytes in memory and returns a pointer to
 /// the first byte.
@@ -11,4 +15,47 @@ pub fn alloc(size: usize) -> *mut u8 {
     let ptr = buf.as_mut_ptr();
     mem::forget(buf);
     return ptr;
+}
+
+/// Read the data held at the given location in memory as the given `TOutput` type.
+///
+/// The bytes at the given location are expected to be in the format `[type_id][len][json_string]`.
+///
+/// # Safety
+///
+/// The memory at the given location will be disposed of on read.
+pub fn from_transport_vec<TOutput: for<'a> Deserialize<'a>>(ptr: *mut u8) -> TOutput {
+    let type_vec: Vec<u8> = unsafe {
+        Vec::from_raw_parts(ptr, mem::size_of::<i8>(), mem::size_of::<i8>())
+    };
+
+    let type_rdr = Cursor::new(type_vec);
+    let mut type_rdr = ManuallyDrop::new(type_rdr);
+
+    let type_id: i8  = type_rdr.read_i8().unwrap().try_into().unwrap();
+    if type_id <= 0 {
+        panic!("todo - we only support type > 0 atm, return error")
+    }
+
+    let len_vec: Vec<u8> = unsafe {
+        Vec::from_raw_parts(ptr.add(mem::size_of::<i8>()), mem::size_of::<u32>(), mem::size_of::<u32>())
+    };
+
+    let len_rdr = Cursor::new(len_vec);
+    let mut len_rdr = ManuallyDrop::new(len_rdr);
+
+    let len: usize = len_rdr.read_u32::<LittleEndian>().unwrap().try_into().unwrap();
+
+    let input_vec: Vec<u8> = unsafe {
+        Vec::from_raw_parts(ptr.add(mem::size_of::<i8>()+mem::size_of::<u32>()), len, len)
+    };
+    let input_vec = ManuallyDrop::new(input_vec);
+
+    let json_string = String::from_utf8(input_vec.to_vec()).unwrap().clone();
+
+    mem::drop(input_vec);
+    mem::drop(len_rdr);
+    mem::drop(type_rdr);
+
+    serde_json::from_str::<TOutput>(&json_string).unwrap()
 }
