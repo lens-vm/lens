@@ -9,5 +9,5 @@ type Pipe[T any] interface {
 
 	// Bytes returns the current value of the enumerable as a byte array.  This includes
 	// the length specifier.
-	Bytes() []byte
+	Bytes() ([]byte, error)
 }

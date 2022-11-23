@@ -13,6 +13,8 @@ function abort(
     unreachable()
 }
 
+const JSON_TYPE_ID: i8 = 1;
+
 export function alloc(size: usize): usize {
     let buf = new ArrayBuffer(i32(size));
     let ptr = changetype<usize>(buf);
@@ -37,22 +39,24 @@ export function transform(ptr: usize): usize {
     }
     encoder.popObject()
 
-    return toTransportVec(encoder.toString());
+    return toTransportVec(JSON_TYPE_ID, encoder.toString());
 }
 
 function fromTransportVec(ptr: usize): string {
-    let len = load<u32>(ptr)
-    return String.UTF8.decodeUnsafe(ptr+4, len, false)
+    let type = load<i8>(ptr)
+    let len = load<u32>(ptr+1)
+    return String.UTF8.decodeUnsafe(ptr+1+4, len, false)
 }
 
-function toTransportVec(message: string): usize {
+function toTransportVec(type_id: i8, message: string): usize {
     let len = String.UTF8.byteLength(message, false);
 
-    let buf = new Uint8Array(len+4);
+    let buf = new Uint8Array(len+1+4);
     let ptr = changetype<usize>(buf);
-    store<u32>(ptr, len);
+    store<i8>(ptr, len);
+    store<u32>(ptr+1, len);
 
-    String.UTF8.encodeUnsafe(changetype<usize>(message), len, ptr+4, false)
+    String.UTF8.encodeUnsafe(changetype<usize>(message), len, ptr+1+4, false)
 
     return ptr
 }

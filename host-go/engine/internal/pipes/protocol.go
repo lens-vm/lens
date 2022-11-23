@@ -3,35 +3,63 @@ package pipes
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 
 	"github.com/lens-vm/lens/host-go/engine/module"
 )
 
 // getItem returns the item at the given index.  This includes the length specifier.
-func getItem(src []byte, startIndex module.MemSize) []byte {
-	resultBuffer := make([]byte, module.LenSize)
-	copy(resultBuffer, src[startIndex:startIndex+module.LenSize])
+func getItem(src []byte, startIndex module.MemSize) ([]byte, error) {
+	typeBuffer := make([]byte, module.TypeIdSize)
+	copy(typeBuffer, src[startIndex:startIndex+module.TypeIdSize])
+	var typeId module.TypeIdType
+	reader := bytes.NewReader(typeBuffer)
+	err := binary.Read(reader, module.TypeIdByteOrder, &typeId)
+	if err != nil {
+		return nil, err
+	}
+
+	lenBuffer := make([]byte, module.LenSize)
+	copy(lenBuffer, src[startIndex+module.TypeIdSize:startIndex+module.TypeIdSize+module.LenSize])
 	var len module.LenType
-	buf := bytes.NewReader(resultBuffer)
-	_ = binary.Read(buf, module.LenByteOrder, &len)
+	reader = bytes.NewReader(lenBuffer)
+	err = binary.Read(reader, module.LenByteOrder, &len)
+	if err != nil {
+		return nil, err
+	}
+
+	if module.IsError(typeId) {
+		return nil, errors.New(
+			string(
+				src[startIndex+module.TypeIdSize+module.LenSize : startIndex+module.TypeIdSize+module.MemSize(len)+module.LenSize],
+			),
+		)
+	}
 
 	// todo - the end index of this is untested, as it will only affect performance atm if it is longer than desired
 	// unless it overwrites adjacent stuff
-	return src[startIndex : startIndex+module.MemSize(len)+module.LenSize]
+	return src[startIndex : startIndex+module.TypeIdSize+module.MemSize(len)+module.LenSize], nil
 }
 
 // WriteItem calculates the length specifier for the given source object and then writes both specifier
 // and item to the destination.
-func WriteItem(src []byte, dst []byte) error {
-	len := module.LenType(len(src))
-	writer := bytes.NewBuffer([]byte{})
-	err := binary.Write(writer, module.LenByteOrder, len)
+func WriteItem(typeId module.TypeIdType, src []byte, dst []byte) error {
+	typeWriter := bytes.NewBuffer([]byte{})
+	err := binary.Write(typeWriter, module.TypeIdByteOrder, typeId)
 	if err != nil {
 		return err
 	}
 
-	copy(dst, writer.Bytes())
-	copy(dst[module.LenSize:], src)
+	len := module.LenType(len(src))
+	lenWriter := bytes.NewBuffer([]byte{})
+	err = binary.Write(lenWriter, module.LenByteOrder, len)
+	if err != nil {
+		return err
+	}
+
+	copy(dst, typeWriter.Bytes())
+	copy(dst[module.TypeIdSize:], lenWriter.Bytes())
+	copy(dst[module.TypeIdSize+module.LenSize:], src)
 
 	return nil
 }

@@ -44,12 +44,17 @@ func (s *fromSource[TSource, TResult]) Next() (bool, error) {
 }
 
 func (s *fromSource[TSource, TResult]) Value() TResult {
-	item := getItem(s.module.GetData(), s.currentIndex)
-	jsonStr := string(item[module.LenSize:])
+	item, err := getItem(s.module.GetData(), s.currentIndex)
+	if err != nil {
+		// TODO: We should return this instead of panicing
+		// https://github.com/sourcenetwork/lens/issues/10
+		panic(err)
+	}
+	jsonBytes := item[module.TypeIdSize+module.LenSize:]
 
 	var t TResult
 	result := &t
-	err := json.Unmarshal([]byte(jsonStr), result)
+	err = json.Unmarshal(jsonBytes, result)
 	if err != nil {
 		// TODO: We should return this instead of panicing
 		// https://github.com/sourcenetwork/lens/issues/10
@@ -59,7 +64,7 @@ func (s *fromSource[TSource, TResult]) Value() TResult {
 	return *result
 }
 
-func (s *fromSource[TSource, TResult]) Bytes() []byte {
+func (s *fromSource[TSource, TResult]) Bytes() ([]byte, error) {
 	return getItem(s.module.GetData(), s.currentIndex)
 }
 
@@ -73,12 +78,12 @@ func (s *fromSource[TSource, TResult]) transport(sourceItem TSource) (module.Mem
 		return 0, err
 	}
 
-	index, err := s.module.Alloc(module.MemSize(len(sourceBytes)) + module.LenSize)
+	index, err := s.module.Alloc(module.TypeIdSize + module.MemSize(len(sourceBytes)) + module.LenSize)
 	if err != nil {
 		return 0, err
 	}
 
-	err = WriteItem(sourceBytes, s.module.GetData()[index:])
+	err = WriteItem(module.JSONTypeID, sourceBytes, s.module.GetData()[index:])
 	if err != nil {
 		return 0, err
 	}

@@ -45,16 +45,28 @@ func TestAppendLensWithoutWasm(t *testing.T) {
 				return arbitraryIndex, nil
 			},
 			Transform: func(startIndex module.MemSize) (module.MemSize, error) {
-				resultBuffer := make([]byte, module.LenSize)
-				copy(resultBuffer, memory[startIndex:startIndex+module.LenSize])
-				var inputLen module.LenType
-				buf := bytes.NewReader(resultBuffer)
-				_ = binary.Read(buf, module.LenByteOrder, &inputLen)
+				typeBuffer := make([]byte, module.TypeIdSize)
+				copy(typeBuffer, memory[startIndex:startIndex+module.TypeIdSize])
+				var inputTypeId module.TypeIdType
+				buf := bytes.NewReader(typeBuffer)
+				err := binary.Read(buf, module.TypeIdByteOrder, &inputTypeId)
+				if err != nil {
+					return 0, err
+				}
 
-				sourceJson := memory[startIndex+module.LenSize : startIndex+module.MemSize(inputLen)+module.LenSize]
+				lenBuffer := make([]byte, module.LenSize)
+				copy(lenBuffer, memory[startIndex+module.TypeIdSize:startIndex+module.TypeIdSize+module.LenSize])
+				var inputLen module.LenType
+				buf = bytes.NewReader(lenBuffer)
+				err = binary.Read(buf, module.LenByteOrder, &inputLen)
+				if err != nil {
+					return 0, err
+				}
+
+				sourceJson := memory[startIndex+module.TypeIdSize+module.LenSize : startIndex+module.TypeIdSize+module.MemSize(inputLen)+module.LenSize]
 				sourceItem := &type1{}
 
-				err := json.Unmarshal([]byte(sourceJson), sourceItem)
+				err = json.Unmarshal([]byte(sourceJson), sourceItem)
 				if err != nil {
 					return 0, err
 				}
@@ -69,17 +81,24 @@ func TestAppendLensWithoutWasm(t *testing.T) {
 					return 0, err
 				}
 
+				typeWriter := bytes.NewBuffer([]byte{})
+				err = binary.Write(typeWriter, module.TypeIdByteOrder, int8(1))
+				if err != nil {
+					return 0, err
+				}
+
 				returnLen := module.LenType(len(returnBytes))
-				writer := bytes.NewBuffer([]byte{})
-				err = binary.Write(writer, module.LenByteOrder, returnLen)
+				lenWriter := bytes.NewBuffer([]byte{})
+				err = binary.Write(lenWriter, module.LenByteOrder, returnLen)
 				if err != nil {
 					return 0, err
 				}
 
 				arbitraryReturnIndex := math.MaxUint16 / 2
 				dst := memory[arbitraryReturnIndex:]
-				copy(dst, writer.Bytes())
-				copy(dst[module.LenSize:], returnBytes)
+				copy(dst, typeWriter.Bytes())
+				copy(dst[module.TypeIdSize:], lenWriter.Bytes())
+				copy(dst[module.TypeIdSize+module.LenSize:], returnBytes)
 
 				return module.MemSize(arbitraryReturnIndex), nil
 			},

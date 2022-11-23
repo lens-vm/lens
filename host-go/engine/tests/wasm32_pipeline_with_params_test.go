@@ -81,3 +81,34 @@ func TestWasm32PipelineMultipleModulesAndWithAddtionalParams(t *testing.T) {
 	}
 	assert.False(t, hasNext)
 }
+
+func TestWasm32PipelineWithAddtionalParamsErrors(t *testing.T) {
+	module, err := engine.LoadModule(wasmPath4, "NotAField", "FullName")
+	if err != nil {
+		t.Error(err)
+	}
+
+	input := type1{
+		Name: "John",
+		Age:  32,
+	}
+	source := enumerable.New([]type1{input})
+
+	pipe := engine.Append[type1, type2](source, module)
+
+	hasNext, err := pipe.Next()
+	if err != nil {
+		t.Error(err)
+	}
+	assert.True(t, hasNext)
+
+	// todo - this should not actually panic, but should return an error:
+	// https://github.com/sourcenetwork/lens/issues/10
+	assert.Panics(
+		t,
+		func() {
+			pipe.Value()
+		},
+		"NotAField was not found",
+	)
+}
