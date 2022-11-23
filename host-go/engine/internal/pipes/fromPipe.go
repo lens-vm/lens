@@ -46,7 +46,7 @@ func (s *fromPipe[TSource, TResult]) Next() (bool, error) {
 	return true, nil
 }
 
-func (s *fromPipe[TSource, TResult]) Value() TResult {
+func (s *fromPipe[TSource, TResult]) Value() (TResult, error) {
 	item, err := getItem(s.module.GetData(), s.currentIndex)
 	if err != nil {
 		// TODO: We should return this instead of panicing
@@ -63,7 +63,7 @@ func (s *fromPipe[TSource, TResult]) Value() TResult {
 		// https://github.com/sourcenetwork/lens/issues/10
 		panic(err)
 	}
-	return *result
+	return *result, nil
 }
 
 func (s *fromPipe[TSource, TResult]) Bytes() ([]byte, error) {

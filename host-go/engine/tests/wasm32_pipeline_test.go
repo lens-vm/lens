@@ -30,10 +30,12 @@ func TestWasm32PipelineFromSourceAsFull(t *testing.T) {
 	}
 	assert.True(t, hasNext)
 
+	val, err := pipe.Value()
+	assert.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "John",
 		Age:      32,
-	}, pipe.Value())
+	}, val)
 
 	hasNext, err = pipe.Next()
 	if err != nil {
@@ -67,10 +69,12 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFull(t *testing.T) {
 	}
 	assert.True(t, hasNext)
 
+	val, err := pipe2.Value()
+	assert.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "John",
 		Age:      33,
-	}, pipe2.Value())
+	}, val)
 
 	hasNext, err = pipe2.Next()
 	if err != nil {
@@ -105,10 +109,12 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFullToModuleAsFull(t *testing.T
 	}
 	assert.True(t, hasNext)
 
+	val, err := pipe3.Value()
+	assert.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "John",
 		Age:      34,
-	}, pipe3.Value())
+	}, val)
 
 	hasNext, err = pipe3.Next()
 	if err != nil {
@@ -147,10 +153,12 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFullToASModuleAsFull(t *testing
 	}
 	assert.True(t, hasNext)
 
+	val, err := pipe3.Value()
+	assert.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "John",
 		Age:      43,
-	}, pipe3.Value())
+	}, val)
 
 	hasNext, err = pipe3.Next()
 	if err != nil {
@@ -188,10 +196,12 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFullToModuleAsFullWithSingleApp
 	}
 	assert.True(t, hasNext)
 
+	val, err := pipe.Value()
+	assert.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "John",
 		Age:      34,
-	}, pipe.Value())
+	}, val)
 
 	hasNext, err = pipe.Next()
 	if err != nil {

@@ -32,7 +32,11 @@ func (s *fromSource[TSource, TResult]) Next() (bool, error) {
 		return hasNext, err
 	}
 
-	value := s.source.Value()
+	value, err := s.source.Value()
+	if err != nil {
+		return false, nil
+	}
+
 	// We do this here to keep the work (and errors) in the `Next` call
 	result, err := s.transport(value)
 	if err != nil {
@@ -43,7 +47,7 @@ func (s *fromSource[TSource, TResult]) Next() (bool, error) {
 	return true, nil
 }
 
-func (s *fromSource[TSource, TResult]) Value() TResult {
+func (s *fromSource[TSource, TResult]) Value() (TResult, error) {
 	item, err := getItem(s.module.GetData(), s.currentIndex)
 	if err != nil {
 		// TODO: We should return this instead of panicing
@@ -61,7 +65,7 @@ func (s *fromSource[TSource, TResult]) Value() TResult {
 		panic(err)
 	}
 
-	return *result
+	return *result, nil
 }
 
 func (s *fromSource[TSource, TResult]) Bytes() ([]byte, error) {

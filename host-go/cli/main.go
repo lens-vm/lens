@@ -40,7 +40,12 @@ func main() {
 			break
 		}
 
-		results = append(results, result.Value())
+		val, err := result.Value()
+		if err != nil {
+			panic(err)
+		}
+
+		results = append(results, val)
 	}
 
 	resultJson, err := json.Marshal(results)

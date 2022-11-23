@@ -30,10 +30,12 @@ func TestWasm32PipelineWithAddtionalParams(t *testing.T) {
 	}
 	assert.True(t, hasNext)
 
+	val, err := pipe.Value()
+	assert.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "John",
 		Age:      32,
-	}, pipe.Value())
+	}, val)
 
 	hasNext, err = pipe.Next()
 	if err != nil {
@@ -71,10 +73,12 @@ func TestWasm32PipelineMultipleModulesAndWithAddtionalParams(t *testing.T) {
 	}
 	assert.True(t, hasNext)
 
+	val, err := pipe.Value()
+	assert.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "John",
 		Age:      32,
-	}, pipe.Value())
+	}, val)
 
 	hasNext, err = pipe.Next()
 	if err != nil {

@@ -114,10 +114,12 @@ func TestAppendLensWithoutWasm(t *testing.T) {
 	}
 	assert.True(t, hasNext)
 
+	val, err := results.Value()
+	assert.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "John",
 		Age:      32,
-	}, results.Value())
+	}, val)
 
 	hasNext, err = results.Next()
 	if err != nil {
@@ -125,10 +127,12 @@ func TestAppendLensWithoutWasm(t *testing.T) {
 	}
 	assert.True(t, hasNext)
 
+	val, err = results.Value()
+	assert.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "Fred",
 		Age:      55,
-	}, results.Value())
+	}, val)
 
 	hasNext, err = results.Next()
 	if err != nil {
