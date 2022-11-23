@@ -4,6 +4,20 @@ use std::io::{Cursor, Write};
 use serde::Deserialize;
 use byteorder::{ReadBytesExt, WriteBytesExt, LittleEndian};
 
+/// A type id that denotes a simple string-based error.
+///
+/// If present at the beginning of a byte array being read by a [lens host](https://github.com/lens-vm/lens#Hosts)
+/// or [from_transport_vec](fn.from_transport_vec.html), the byte array will be treated as an error and will be
+/// handled accordingly.
+pub const ERROR_TYPE_ID: i8 = -1;
+
+/// A type id that denotes a json value.
+///
+/// If present at the beginning of a byte array being read by a [lens host](https://github.com/lens-vm/lens#Hosts)
+/// or [from_transport_vec](fn.from_transport_vec.html), the byte array will be treated as a json value and will be
+/// handled accordingly.
+pub const JSON_TYPE_ID: i8 = 1;
+
 /// Allocate the given `size` number of bytes in memory and returns a pointer to
 /// the first byte.
 ///
