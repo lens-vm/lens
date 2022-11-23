@@ -50,11 +50,11 @@ func (s *fromSource[TSource, TResult]) Value() TResult {
 		// https://github.com/sourcenetwork/lens/issues/10
 		panic(err)
 	}
-	jsonStr := string(item[module.TypeIdSize+module.LenSize:])
+	jsonBytes := item[module.TypeIdSize+module.LenSize:]
 
 	var t TResult
 	result := &t
-	err = json.Unmarshal([]byte(jsonStr), result)
+	err = json.Unmarshal(jsonBytes, result)
 	if err != nil {
 		// TODO: We should return this instead of panicing
 		// https://github.com/sourcenetwork/lens/issues/10
