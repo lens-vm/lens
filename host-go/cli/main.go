@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/lens-vm/lens/host-go/config"
-	"github.com/lens-vm/lens/host-go/engine/enumerable"
+	"github.com/sourcenetwork/immutable/enumerable"
 )
 
 func main() {

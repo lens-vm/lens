@@ -3,8 +3,8 @@ package pipes
 import (
 	"encoding/json"
 
-	"github.com/lens-vm/lens/host-go/engine/enumerable"
 	"github.com/lens-vm/lens/host-go/engine/module"
+	"github.com/sourcenetwork/immutable/enumerable"
 )
 
 type fromSource[TSource any, TResult any] struct {

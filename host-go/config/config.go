@@ -3,8 +3,8 @@ package config
 import (
 	"github.com/lens-vm/lens/host-go/config/internal/json"
 	"github.com/lens-vm/lens/host-go/engine"
-	"github.com/lens-vm/lens/host-go/engine/enumerable"
 	"github.com/lens-vm/lens/host-go/engine/module"
+	"github.com/sourcenetwork/immutable/enumerable"
 )
 
 // Load loads a lens file at the given path and applies it to the provided src.
