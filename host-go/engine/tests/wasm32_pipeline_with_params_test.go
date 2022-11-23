@@ -107,13 +107,6 @@ func TestWasm32PipelineWithAddtionalParamsErrors(t *testing.T) {
 	}
 	assert.True(t, hasNext)
 
-	// todo - this should not actually panic, but should return an error:
-	// https://github.com/sourcenetwork/lens/issues/10
-	assert.Panics(
-		t,
-		func() {
-			pipe.Value()
-		},
-		"NotAField was not found",
-	)
+	_, err = pipe.Value()
+	assert.ErrorContains(t, err, "NotAField was not found")
 }

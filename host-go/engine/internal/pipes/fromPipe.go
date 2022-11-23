@@ -47,21 +47,18 @@ func (s *fromPipe[TSource, TResult]) Next() (bool, error) {
 }
 
 func (s *fromPipe[TSource, TResult]) Value() (TResult, error) {
+	var t TResult
+
 	item, err := getItem(s.module.GetData(), s.currentIndex)
 	if err != nil {
-		// TODO: We should return this instead of panicing
-		// https://github.com/sourcenetwork/lens/issues/10
-		panic(err)
+		return t, err
 	}
 	jsonBytes := item[module.TypeIdSize+module.LenSize:]
 
-	var t TResult
 	result := &t
 	err = json.Unmarshal(jsonBytes, result)
 	if err != nil {
-		// TODO: We should return this instead of panicing
-		// https://github.com/sourcenetwork/lens/issues/10
-		panic(err)
+		return t, err
 	}
 	return *result, nil
 }
