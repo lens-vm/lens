@@ -1,8 +1,8 @@
 use std::mem;
 use std::mem::ManuallyDrop;
-use std::io::Cursor;
+use std::io::{Cursor, Write};
 use serde::Deserialize;
-use byteorder::{ReadBytesExt, LittleEndian};
+use byteorder::{ReadBytesExt, WriteBytesExt, LittleEndian};
 
 /// Allocate the given `size` number of bytes in memory and returns a pointer to
 /// the first byte.
@@ -58,4 +58,22 @@ pub fn from_transport_vec<TOutput: for<'a> Deserialize<'a>>(ptr: *mut u8) -> TOu
     mem::drop(type_rdr);
 
     serde_json::from_str::<TOutput>(&json_string).unwrap()
+}
+
+/// Write the given `message` bytes to memory, returning a pointer to the first byte.
+///
+/// Bytes are written in the same format as expected by [lens hosts](https://github.com/lens-vm/lens#Hosts) and
+/// [from_transport_vec](fn.from_transport_vec.html) \- `[type_id][len][json_string]`.
+pub fn to_transport_vec(type_id: i8, message: &[u8]) -> *mut u8 {
+    let buffer = Vec::with_capacity(message.len() + mem::size_of::<u32>() + mem::size_of::<i8>());
+    let mut wtr = Cursor::new(buffer);
+
+    wtr.write_i8(type_id).unwrap();
+    wtr.set_position(mem::size_of::<i8>() as u64);
+
+    wtr.write_u32::<LittleEndian>(message.len() as u32).unwrap();
+    wtr.set_position(mem::size_of::<i8>() as u64 + mem::size_of::<u32>() as u64);
+    wtr.write(message).unwrap();
+
+    wtr.into_inner().clone().as_mut_ptr()
 }
