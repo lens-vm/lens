@@ -3,6 +3,13 @@ use std::mem::ManuallyDrop;
 use std::io::{Cursor, Write};
 use serde::Deserialize;
 use byteorder::{ReadBytesExt, WriteBytesExt, LittleEndian};
+use result::Result;
+
+/// [Result](https://doc.rust-lang.org/std/result/enum.Result.html) type alias returned by lens_sdk.
+pub mod result;
+
+/// Error types returned by lens_sdk.
+pub mod error;
 
 /// A type id that denotes a simple string-based error.
 ///
@@ -33,12 +40,23 @@ pub fn alloc(size: usize) -> *mut u8 {
 
 /// Read the data held at the given location in memory as the given `TOutput` type.
 ///
-/// The bytes at the given location are expected to be in the format `[type_id][len][json_string]`.
+/// The bytes at the given location are expected to be in the correct format for the first (`type_id`) byte.
+///
+/// `type_id` | Type | Expected format
+/// --- | --- | ---
+/// < 0 | error | N/A - unsupported, will return an [InputErrorUnsupportedError](error/enum.LensError.html#variant.InputErrorUnsupportedError)
+/// 0 | null value | N/A - will return [None](https://doc.rust-lang.org/std/option/enum.Option.html#variant.None)
+/// \> 0 | JSON | \[`len`\]\[`json_string`\] where len is the length of bytes in the json_string
 ///
 /// # Safety
 ///
 /// The memory at the given location will be disposed of on read.
-pub fn from_transport_vec<TOutput: for<'a> Deserialize<'a>>(ptr: *mut u8) -> TOutput {
+///
+/// # Errors
+///
+/// This function will return an [Error](error/enum.Error.html) if the data at the given location is not in the expected
+/// format.
+pub fn from_transport_vec<TOutput: for<'a> Deserialize<'a>>(ptr: *mut u8) -> Result<Option<TOutput>> {
     let type_vec: Vec<u8> = unsafe {
         Vec::from_raw_parts(ptr, mem::size_of::<i8>(), mem::size_of::<i8>())
     };
@@ -46,9 +64,12 @@ pub fn from_transport_vec<TOutput: for<'a> Deserialize<'a>>(ptr: *mut u8) -> TOu
     let type_rdr = Cursor::new(type_vec);
     let mut type_rdr = ManuallyDrop::new(type_rdr);
 
-    let type_id: i8  = type_rdr.read_i8().unwrap().try_into().unwrap();
-    if type_id <= 0 {
-        panic!("todo - we only support type > 0 atm, return error")
+    let type_id: i8  = type_rdr.read_i8()?;
+    if type_id == 0 {
+        return Ok(None)
+    }
+    if type_id < 0 {
+        return Result::from(error::LensError::InputErrorUnsupportedError)
     }
 
     let len_vec: Vec<u8> = unsafe {
@@ -58,20 +79,24 @@ pub fn from_transport_vec<TOutput: for<'a> Deserialize<'a>>(ptr: *mut u8) -> TOu
     let len_rdr = Cursor::new(len_vec);
     let mut len_rdr = ManuallyDrop::new(len_rdr);
 
-    let len: usize = len_rdr.read_u32::<LittleEndian>().unwrap().try_into().unwrap();
+    let len: usize = len_rdr.read_u32::<LittleEndian>()?.try_into()?;
 
     let input_vec: Vec<u8> = unsafe {
         Vec::from_raw_parts(ptr.add(mem::size_of::<i8>()+mem::size_of::<u32>()), len, len)
     };
     let input_vec = ManuallyDrop::new(input_vec);
 
-    let json_string = String::from_utf8(input_vec.to_vec()).unwrap().clone();
+    let json_string = String::from_utf8(input_vec.to_vec())?.clone();
 
     mem::drop(input_vec);
     mem::drop(len_rdr);
     mem::drop(type_rdr);
 
-    serde_json::from_str::<TOutput>(&json_string).unwrap()
+    // It is possible for null json values to reach this line, particularly if sourced directly
+    // from a 3rd party module, so we ensure that we parse to option as well as the earlier type_id
+    // checks.
+    let result = serde_json::from_str::<Option<TOutput>>(&json_string)?;
+    Ok(result)
 }
 
 /// Write the given `message` bytes to memory, returning a pointer to the first byte.

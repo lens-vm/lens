@@ -17,7 +17,7 @@ const JSON_TYPE_ID: i8 = 1;
 
 #[no_mangle]
 pub extern fn transform(ptr: *mut u8) -> *mut u8 {
-    let input = lens_sdk::from_transport_vec::<Value>(ptr);
+    let input = lens_sdk::from_transport_vec::<Value>(ptr).unwrap().unwrap();
     
     let result = Value {
         name: input.name,

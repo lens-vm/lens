@@ -25,7 +25,7 @@ pub extern fn alloc(size: usize) -> *mut u8 {
 
 #[no_mangle]
 pub extern fn transform(ptr: *mut u8) -> *mut u8 {
-    let input = lens_sdk::from_transport_vec::<Input>(ptr);
+    let input = lens_sdk::from_transport_vec::<Input>(ptr).unwrap().unwrap();
     
     let result = Result {
         full_name: input.name,

@@ -51,7 +51,7 @@ func (s *fromSource[TSource, TResult]) Value() (TResult, error) {
 	var t TResult
 
 	item, err := getItem(s.module.GetData(), s.currentIndex)
-	if err != nil {
+	if err != nil || item == nil {
 		return t, err
 	}
 	jsonBytes := item[module.TypeIdSize+module.LenSize:]

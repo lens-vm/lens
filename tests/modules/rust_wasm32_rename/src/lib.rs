@@ -17,7 +17,7 @@ pub extern fn alloc(size: usize) -> *mut u8 {
 
 #[no_mangle]
 pub extern fn set_param(ptr: *mut u8) {
-    let parameter = lens_sdk::from_transport_vec::<Parameters>(ptr);
+    let parameter = lens_sdk::from_transport_vec::<Parameters>(ptr).unwrap().unwrap();
 
     let mut dst = PARAMETERS.write().unwrap();
     *dst = Some(parameter);
@@ -25,7 +25,7 @@ pub extern fn set_param(ptr: *mut u8) {
 
 #[no_mangle]
 pub extern fn transform(ptr: *mut u8) -> *mut u8 {
-    let mut input = lens_sdk::from_transport_vec::<HashMap<String, serde_json::Value>>(ptr);
+    let mut input = lens_sdk::from_transport_vec::<HashMap<String, serde_json::Value>>(ptr).unwrap().unwrap();
 
     let params = PARAMETERS.read().unwrap().clone().unwrap();
     let value = match input.get_mut(&params.src) {
