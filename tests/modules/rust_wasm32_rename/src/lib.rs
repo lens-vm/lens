@@ -32,7 +32,7 @@ pub extern fn transform(ptr: *mut u8) -> *mut u8 {
         Some(i) => i.clone(),
         None => {
             let message = format!("{} was not found", params.src);
-            return lens_sdk::to_transport_vec(lens_sdk::ERROR_TYPE_ID, &message.as_bytes())
+            return lens_sdk::to_transport_vec(lens_sdk::ERROR_TYPE_ID, &message.as_bytes()).unwrap()
         },
     };
     
@@ -40,5 +40,5 @@ pub extern fn transform(ptr: *mut u8) -> *mut u8 {
     input.insert(params.dst, value);
     
     let result_json = serde_json::to_vec(&input).unwrap();
-    lens_sdk::to_transport_vec(lens_sdk::JSON_TYPE_ID, &result_json.clone())
+    lens_sdk::to_transport_vec(lens_sdk::JSON_TYPE_ID, &result_json.clone()).unwrap()
 }

@@ -25,5 +25,5 @@ pub extern fn transform(ptr: *mut u8) -> *mut u8 {
     };
     
     let result_json = serde_json::to_vec(&result).unwrap();
-    lens_sdk::to_transport_vec(JSON_TYPE_ID, &result_json)
+    lens_sdk::to_transport_vec(JSON_TYPE_ID, &result_json).unwrap()
 }
