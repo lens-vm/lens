@@ -12,8 +12,8 @@ type Lens struct {
 }
 
 type LensModule struct {
-	Path                 string `json:"path"`
-	AdditionalParameters []any  `json:"additionalParameters"`
+	Path      string `json:"path"`
+	Arguments []any  `json:"arguments"`
 }
 
 func Load(path string) (model.Lens, error) {
@@ -30,14 +30,14 @@ func Load(path string) (model.Lens, error) {
 
 	lenses := make([]model.LensModule, len(lensFile.Lenses))
 	for i, lensModule := range lensFile.Lenses {
-		additionalParameters := make([]any, len(lensModule.AdditionalParameters))
-		for j, additionalParameter := range lensModule.AdditionalParameters {
-			additionalParameters[j] = additionalParameter
+		arguments := make([]any, len(lensModule.Arguments))
+		for j, additionalParameter := range lensModule.Arguments {
+			arguments[j] = additionalParameter
 		}
 
 		lenses[i] = model.LensModule{
-			Path:                 lensModule.Path,
-			AdditionalParameters: additionalParameters,
+			Path:      lensModule.Path,
+			Arguments: arguments,
 		}
 	}
 

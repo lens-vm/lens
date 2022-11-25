@@ -20,7 +20,7 @@ func Load[TSource any, TResult any](path string, src enumerable.Enumerable[TSour
 
 	modules := []module.Module{}
 	for _, lensModule := range lensConfig.Lenses {
-		module, err := engine.LoadModule(lensModule.Path, lensModule.AdditionalParameters...)
+		module, err := engine.LoadModule(lensModule.Path, lensModule.Arguments...)
 		if err != nil {
 			return nil, err
 		}

@@ -25,7 +25,7 @@ func TestWithParams(t *testing.T) {
 				"lenses": [
 					{
 						"path": "` + modules.WasmPath4 + `",
-						"additionalParameters": [
+						"arguments": [
 							"Name",
 							"MiddleName"
 						]
