@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/lens-vm/lens/host-go/engine/enumerable"
 	"github.com/lens-vm/lens/host-go/engine/internal/pipes"
 	"github.com/lens-vm/lens/host-go/engine/module"
+	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/wasmerio/wasmer-go/wasmer"
 )

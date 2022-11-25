@@ -3,8 +3,8 @@ package pipes
 import (
 	"encoding/json"
 
-	"github.com/lens-vm/lens/host-go/engine/enumerable"
 	"github.com/lens-vm/lens/host-go/engine/module"
+	"github.com/sourcenetwork/immutable/enumerable"
 )
 
 type fromSource[TSource any, TResult any] struct {
@@ -32,7 +32,11 @@ func (s *fromSource[TSource, TResult]) Next() (bool, error) {
 		return hasNext, err
 	}
 
-	value := s.source.Value()
+	value, err := s.source.Value()
+	if err != nil {
+		return false, nil
+	}
+
 	// We do this here to keep the work (and errors) in the `Next` call
 	result, err := s.transport(value)
 	if err != nil {
@@ -43,25 +47,22 @@ func (s *fromSource[TSource, TResult]) Next() (bool, error) {
 	return true, nil
 }
 
-func (s *fromSource[TSource, TResult]) Value() TResult {
+func (s *fromSource[TSource, TResult]) Value() (TResult, error) {
+	var t TResult
+
 	item, err := getItem(s.module.GetData(), s.currentIndex)
 	if err != nil {
-		// TODO: We should return this instead of panicing
-		// https://github.com/sourcenetwork/lens/issues/10
-		panic(err)
+		return t, err
 	}
 	jsonBytes := item[module.TypeIdSize+module.LenSize:]
 
-	var t TResult
 	result := &t
 	err = json.Unmarshal(jsonBytes, result)
 	if err != nil {
-		// TODO: We should return this instead of panicing
-		// https://github.com/sourcenetwork/lens/issues/10
-		panic(err)
+		return t, err
 	}
 
-	return *result
+	return *result, nil
 }
 
 func (s *fromSource[TSource, TResult]) Bytes() ([]byte, error) {

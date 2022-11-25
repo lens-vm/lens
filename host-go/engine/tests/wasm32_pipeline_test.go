@@ -4,10 +4,11 @@ import (
 	"testing"
 
 	"github.com/lens-vm/lens/host-go/engine"
-	"github.com/lens-vm/lens/host-go/engine/enumerable"
 	"github.com/lens-vm/lens/tests/modules"
+	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestWasm32PipelineFromSourceAsFull(t *testing.T) {
@@ -30,10 +31,12 @@ func TestWasm32PipelineFromSourceAsFull(t *testing.T) {
 	}
 	assert.True(t, hasNext)
 
+	val, err := pipe.Value()
+	require.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "John",
 		Age:      32,
-	}, pipe.Value())
+	}, val)
 
 	hasNext, err = pipe.Next()
 	if err != nil {
@@ -67,10 +70,12 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFull(t *testing.T) {
 	}
 	assert.True(t, hasNext)
 
+	val, err := pipe2.Value()
+	require.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "John",
 		Age:      33,
-	}, pipe2.Value())
+	}, val)
 
 	hasNext, err = pipe2.Next()
 	if err != nil {
@@ -105,10 +110,12 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFullToModuleAsFull(t *testing.T
 	}
 	assert.True(t, hasNext)
 
+	val, err := pipe3.Value()
+	require.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "John",
 		Age:      34,
-	}, pipe3.Value())
+	}, val)
 
 	hasNext, err = pipe3.Next()
 	if err != nil {
@@ -147,10 +154,12 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFullToASModuleAsFull(t *testing
 	}
 	assert.True(t, hasNext)
 
+	val, err := pipe3.Value()
+	require.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "John",
 		Age:      43,
-	}, pipe3.Value())
+	}, val)
 
 	hasNext, err = pipe3.Next()
 	if err != nil {
@@ -188,10 +197,12 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFullToModuleAsFullWithSingleApp
 	}
 	assert.True(t, hasNext)
 
+	val, err := pipe.Value()
+	require.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "John",
 		Age:      34,
-	}, pipe.Value())
+	}, val)
 
 	hasNext, err = pipe.Next()
 	if err != nil {

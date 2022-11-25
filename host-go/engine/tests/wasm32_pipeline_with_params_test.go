@@ -4,10 +4,11 @@ import (
 	"testing"
 
 	"github.com/lens-vm/lens/host-go/engine"
-	"github.com/lens-vm/lens/host-go/engine/enumerable"
 	"github.com/lens-vm/lens/tests/modules"
+	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestWasm32PipelineWithAddtionalParams(t *testing.T) {
@@ -30,10 +31,12 @@ func TestWasm32PipelineWithAddtionalParams(t *testing.T) {
 	}
 	assert.True(t, hasNext)
 
+	val, err := pipe.Value()
+	require.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "John",
 		Age:      32,
-	}, pipe.Value())
+	}, val)
 
 	hasNext, err = pipe.Next()
 	if err != nil {
@@ -71,10 +74,12 @@ func TestWasm32PipelineMultipleModulesAndWithAddtionalParams(t *testing.T) {
 	}
 	assert.True(t, hasNext)
 
+	val, err := pipe.Value()
+	require.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "John",
 		Age:      32,
-	}, pipe.Value())
+	}, val)
 
 	hasNext, err = pipe.Next()
 	if err != nil {
@@ -103,13 +108,6 @@ func TestWasm32PipelineWithAddtionalParamsErrors(t *testing.T) {
 	}
 	assert.True(t, hasNext)
 
-	// todo - this should not actually panic, but should return an error:
-	// https://github.com/sourcenetwork/lens/issues/10
-	assert.Panics(
-		t,
-		func() {
-			pipe.Value()
-		},
-		"NotAField was not found",
-	)
+	_, err = pipe.Value()
+	assert.ErrorContains(t, err, "NotAField was not found")
 }

@@ -8,10 +8,11 @@ import (
 	"testing"
 
 	"github.com/lens-vm/lens/host-go/engine"
-	"github.com/lens-vm/lens/host-go/engine/enumerable"
 	"github.com/lens-vm/lens/host-go/engine/module"
+	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestAppendLensWithoutWasm asserts that AppendLens can function independently of anything wasm related.
@@ -114,10 +115,12 @@ func TestAppendLensWithoutWasm(t *testing.T) {
 	}
 	assert.True(t, hasNext)
 
+	val, err := results.Value()
+	require.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "John",
 		Age:      32,
-	}, results.Value())
+	}, val)
 
 	hasNext, err = results.Next()
 	if err != nil {
@@ -125,10 +128,12 @@ func TestAppendLensWithoutWasm(t *testing.T) {
 	}
 	assert.True(t, hasNext)
 
+	val, err = results.Value()
+	require.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "Fred",
 		Age:      55,
-	}, results.Value())
+	}, val)
 
 	hasNext, err = results.Next()
 	if err != nil {
