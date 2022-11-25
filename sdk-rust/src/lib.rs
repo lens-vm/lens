@@ -14,14 +14,14 @@ pub mod error;
 /// A type id that denotes a simple string-based error.
 ///
 /// If present at the beginning of a byte array being read by a [lens host](https://github.com/lens-vm/lens#Hosts)
-/// or [from_transport_vec](fn.from_transport_vec.html), the byte array will be treated as an error and will be
+/// or [try_from_mem](fn.try_from_mem.html), the byte array will be treated as an error and will be
 /// handled accordingly.
 pub const ERROR_TYPE_ID: i8 = -1;
 
 /// A type id that denotes a json value.
 ///
 /// If present at the beginning of a byte array being read by a [lens host](https://github.com/lens-vm/lens#Hosts)
-/// or [from_transport_vec](fn.from_transport_vec.html), the byte array will be treated as a json value and will be
+/// or [try_from_mem](fn.try_from_mem.html), the byte array will be treated as a json value and will be
 /// handled accordingly.
 pub const JSON_TYPE_ID: i8 = 1;
 
@@ -56,7 +56,7 @@ pub fn alloc(size: usize) -> *mut u8 {
 ///
 /// This function will return an [Error](error/enum.Error.html) if the data at the given location is not in the expected
 /// format.
-pub fn from_transport_vec<TOutput: for<'a> Deserialize<'a>>(ptr: *mut u8) -> Result<Option<TOutput>> {
+pub fn try_from_mem<TOutput: for<'a> Deserialize<'a>>(ptr: *mut u8) -> Result<Option<TOutput>> {
     let type_vec: Vec<u8> = unsafe {
         Vec::from_raw_parts(ptr, mem::size_of::<i8>(), mem::size_of::<i8>())
     };
@@ -102,13 +102,13 @@ pub fn from_transport_vec<TOutput: for<'a> Deserialize<'a>>(ptr: *mut u8) -> Res
 /// Write the given `message` bytes to memory, returning a pointer to the first byte.
 ///
 /// Bytes are written in the same format as expected by [lens hosts](https://github.com/lens-vm/lens#Hosts) and
-/// [from_transport_vec](fn.from_transport_vec.html) \- `[type_id][len][json_string]`.
+/// [try_from_mem](fn.try_from_mem.html) \- `[type_id][len][json_string]`.
 ///
 /// # Errors
 ///
 /// This function may return the same errors that [io::write](https://doc.rust-lang.org/std/io/trait.Write.html#tymethod.write)
 /// may return.
-pub fn to_transport_vec(type_id: i8, message: &[u8]) -> Result<*mut u8> {
+pub fn try_to_mem(type_id: i8, message: &[u8]) -> Result<*mut u8> {
     let buffer = Vec::with_capacity(message.len() + mem::size_of::<u32>() + mem::size_of::<i8>());
     let mut wtr = Cursor::new(buffer);
 

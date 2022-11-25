@@ -17,7 +17,7 @@ pub extern fn alloc(size: usize) -> *mut u8 {
 
 #[no_mangle]
 pub extern fn set_param(ptr: *mut u8) {
-    let parameter = lens_sdk::from_transport_vec::<Parameters>(ptr).unwrap().unwrap();
+    let parameter = lens_sdk::try_from_mem::<Parameters>(ptr).unwrap().unwrap();
 
     let mut dst = PARAMETERS.write().unwrap();
     *dst = Some(parameter);
@@ -25,14 +25,14 @@ pub extern fn set_param(ptr: *mut u8) {
 
 #[no_mangle]
 pub extern fn transform(ptr: *mut u8) -> *mut u8 {
-    let mut input = lens_sdk::from_transport_vec::<HashMap<String, serde_json::Value>>(ptr).unwrap().unwrap();
+    let mut input = lens_sdk::try_from_mem::<HashMap<String, serde_json::Value>>(ptr).unwrap().unwrap();
 
     let params = PARAMETERS.read().unwrap().clone().unwrap();
     let value = match input.get_mut(&params.src) {
         Some(i) => i.clone(),
         None => {
             let message = format!("{} was not found", params.src);
-            return lens_sdk::to_transport_vec(lens_sdk::ERROR_TYPE_ID, &message.as_bytes()).unwrap()
+            return lens_sdk::try_to_mem(lens_sdk::ERROR_TYPE_ID, &message.as_bytes()).unwrap()
         },
     };
     
@@ -40,5 +40,5 @@ pub extern fn transform(ptr: *mut u8) -> *mut u8 {
     input.insert(params.dst, value);
     
     let result_json = serde_json::to_vec(&input).unwrap();
-    lens_sdk::to_transport_vec(lens_sdk::JSON_TYPE_ID, &result_json.clone()).unwrap()
+    lens_sdk::try_to_mem(lens_sdk::JSON_TYPE_ID, &result_json.clone()).unwrap()
 }

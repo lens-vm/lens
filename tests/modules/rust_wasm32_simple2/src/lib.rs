@@ -17,7 +17,7 @@ const JSON_TYPE_ID: i8 = 1;
 
 #[no_mangle]
 pub extern fn transform(ptr: *mut u8) -> *mut u8 {
-    let input = lens_sdk::from_transport_vec::<Value>(ptr).unwrap().unwrap();
+    let input = lens_sdk::try_from_mem::<Value>(ptr).unwrap().unwrap();
     
     let result = Value {
         name: input.name,
@@ -25,5 +25,5 @@ pub extern fn transform(ptr: *mut u8) -> *mut u8 {
     };
     
     let result_json = serde_json::to_vec(&result).unwrap();
-    lens_sdk::to_transport_vec(JSON_TYPE_ID, &result_json).unwrap()
+    lens_sdk::try_to_mem(JSON_TYPE_ID, &result_json).unwrap()
 }
