@@ -1,6 +1,23 @@
 use std::collections::HashMap;
 use std::sync::RwLock;
+use std::error::Error;
+use std::{fmt, error};
 use serde::Deserialize;
+
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
+enum ModuleError {
+    ParametersNotSetError,
+}
+
+impl error::Error for ModuleError { }
+
+impl fmt::Display for ModuleError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match &*self {
+            ModuleError::ParametersNotSetError => f.write_str("Parameters have not been set."),
+        }
+    }
+}
 
 #[derive(Deserialize, Clone)]
 pub struct Parameters {
@@ -16,11 +33,20 @@ pub extern fn alloc(size: usize) -> *mut u8 {
 }
 
 #[no_mangle]
-pub extern fn set_param(ptr: *mut u8) {
-    let parameter = lens_sdk::try_from_mem::<Parameters>(ptr).unwrap().unwrap();
+pub extern fn set_param(ptr: *mut u8) -> *mut u8 {
+    match try_set_param(ptr) {
+        Ok(_) => lens_sdk::nil_ptr(),
+        Err(e) => lens_sdk::to_mem(lens_sdk::ERROR_TYPE_ID, &e.to_string().as_bytes())
+    }
+}
 
-    let mut dst = PARAMETERS.write().unwrap();
+fn try_set_param(ptr: *mut u8) -> Result<(), Box<dyn Error>> {
+    let parameter = lens_sdk::try_from_mem::<Parameters>(ptr)?
+        .ok_or(ModuleError::ParametersNotSetError)?;
+
+    let mut dst = PARAMETERS.write()?;
     *dst = Some(parameter);
+    Ok(())
 }
 
 #[no_mangle]

@@ -108,7 +108,12 @@ func LoadModule(path string, paramSets ...map[string]any) (module.Module, error)
 			return module.Module{}, err
 		}
 
-		_, err = setParam.Call(index)
+		r, err := setParam.Call(index)
+		if err != nil {
+			return module.Module{}, err
+		}
+
+		_, err = pipes.GetItem(memory.Data(), r.(module.MemSize))
 		if err != nil {
 			return module.Module{}, err
 		}

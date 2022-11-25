@@ -61,6 +61,7 @@ impl From<LensError> for Error {
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 pub enum LensError {
     InputErrorUnsupportedError,
+    FailedToWriteErrorToMemError,
 }
 
 impl error::Error for LensError { }
@@ -69,6 +70,7 @@ impl fmt::Display for LensError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match &*self {
             LensError::InputErrorUnsupportedError => f.write_str("Using errors as inputs is currently unsupported."),
+            LensError::FailedToWriteErrorToMemError => f.write_str("An error occured when attempting to write an error to memory."),
         }
     }
 }
