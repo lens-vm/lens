@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -31,8 +30,11 @@ var hostExecutablePaths = []string{
 }
 
 func getPathRelativeToProjectRoot(relativePath string) string {
-	_, filename, _, _ := runtime.Caller(0)
-	root := path.Dir(path.Dir(path.Dir(path.Dir(filename))))
+	filename, err := os.Getwd()
+	if err != nil {
+		panic("failed to get working directory")
+	}
+	root := path.Dir(path.Dir(path.Dir(filename)))
 	return path.Join(root, relativePath)
 }
 
