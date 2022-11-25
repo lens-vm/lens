@@ -25,10 +25,10 @@ func TestWithParams(t *testing.T) {
 				"lenses": [
 					{
 						"path": "` + modules.WasmPath4 + `",
-						"arguments": [
-							"Name",
-							"MiddleName"
-						]
+						"arguments": {
+							"src": "Name",
+							"dst": "MiddleName"
+						}
 					}
 				]
 			}`,

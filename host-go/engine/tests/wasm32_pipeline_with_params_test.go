@@ -12,7 +12,13 @@ import (
 )
 
 func TestWasm32PipelineWithAddtionalParams(t *testing.T) {
-	module, err := engine.LoadModule(modules.WasmPath4, "Name", "FullName")
+	module, err := engine.LoadModule(
+		modules.WasmPath4,
+		map[string]any{
+			"src": "Name",
+			"dst": "FullName",
+		},
+	)
 	if err != nil {
 		t.Error(err)
 	}
@@ -46,12 +52,24 @@ func TestWasm32PipelineWithAddtionalParams(t *testing.T) {
 }
 
 func TestWasm32PipelineMultipleModulesAndWithAddtionalParams(t *testing.T) {
-	module1, err := engine.LoadModule(modules.WasmPath4, "Name", "FirstName")
+	module1, err := engine.LoadModule(
+		modules.WasmPath4,
+		map[string]any{
+			"src": "Name",
+			"dst": "FirstName",
+		},
+	)
 	if err != nil {
 		t.Error(err)
 	}
 
-	module2, err := engine.LoadModule(modules.WasmPath4, "FirstName", "FullName")
+	module2, err := engine.LoadModule(
+		modules.WasmPath4,
+		map[string]any{
+			"src": "FirstName",
+			"dst": "FullName",
+		},
+	)
 	if err != nil {
 		t.Error(err)
 	}
@@ -89,7 +107,13 @@ func TestWasm32PipelineMultipleModulesAndWithAddtionalParams(t *testing.T) {
 }
 
 func TestWasm32PipelineWithAddtionalParamsErrors(t *testing.T) {
-	module, err := engine.LoadModule(modules.WasmPath4, "NotAField", "FullName")
+	module, err := engine.LoadModule(
+		modules.WasmPath4,
+		map[string]any{
+			"src": "NotAField",
+			"dst": "FullName",
+		},
+	)
 	if err != nil {
 		t.Error(err)
 	}
