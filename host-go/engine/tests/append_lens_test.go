@@ -12,6 +12,7 @@ import (
 	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestAppendLensWithoutWasm asserts that AppendLens can function independently of anything wasm related.
@@ -115,7 +116,7 @@ func TestAppendLensWithoutWasm(t *testing.T) {
 	assert.True(t, hasNext)
 
 	val, err := results.Value()
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "John",
 		Age:      32,
@@ -128,7 +129,7 @@ func TestAppendLensWithoutWasm(t *testing.T) {
 	assert.True(t, hasNext)
 
 	val, err = results.Value()
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "Fred",
 		Age:      55,

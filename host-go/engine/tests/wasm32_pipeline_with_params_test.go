@@ -8,6 +8,7 @@ import (
 	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestWasm32PipelineWithAddtionalParams(t *testing.T) {
@@ -31,7 +32,7 @@ func TestWasm32PipelineWithAddtionalParams(t *testing.T) {
 	assert.True(t, hasNext)
 
 	val, err := pipe.Value()
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "John",
 		Age:      32,
@@ -74,7 +75,7 @@ func TestWasm32PipelineMultipleModulesAndWithAddtionalParams(t *testing.T) {
 	assert.True(t, hasNext)
 
 	val, err := pipe.Value()
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "John",
 		Age:      32,

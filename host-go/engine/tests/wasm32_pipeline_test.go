@@ -8,6 +8,7 @@ import (
 	"github.com/sourcenetwork/immutable/enumerable"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestWasm32PipelineFromSourceAsFull(t *testing.T) {
@@ -31,7 +32,7 @@ func TestWasm32PipelineFromSourceAsFull(t *testing.T) {
 	assert.True(t, hasNext)
 
 	val, err := pipe.Value()
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "John",
 		Age:      32,
@@ -70,7 +71,7 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFull(t *testing.T) {
 	assert.True(t, hasNext)
 
 	val, err := pipe2.Value()
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "John",
 		Age:      33,
@@ -110,7 +111,7 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFullToModuleAsFull(t *testing.T
 	assert.True(t, hasNext)
 
 	val, err := pipe3.Value()
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "John",
 		Age:      34,
@@ -154,7 +155,7 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFullToASModuleAsFull(t *testing
 	assert.True(t, hasNext)
 
 	val, err := pipe3.Value()
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "John",
 		Age:      43,
@@ -197,7 +198,7 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFullToModuleAsFullWithSingleApp
 	assert.True(t, hasNext)
 
 	val, err := pipe.Value()
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	assert.Equal(t, type2{
 		FullName: "John",
 		Age:      34,
