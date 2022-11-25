@@ -38,7 +38,7 @@ func getPathRelativeToProjectRoot(relativePath string) string {
 
 func executeTest[TSource any, TResult any](t *testing.T, testCase TestCase[TSource, TResult]) {
 	tempDir := t.TempDir()
-	lensFilePath := path.Join(tempDir, "lenseFile.json")
+	lensFilePath := path.Join(tempDir, "lensFile.json")
 	err := os.WriteFile(lensFilePath, []byte(testCase.LensFile), 0700)
 	if err != nil {
 		t.Fatal(err)
