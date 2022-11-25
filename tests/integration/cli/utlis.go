@@ -26,7 +26,7 @@ type TestCase[TSource any, TResult any] struct {
 
 var hostExecutablePaths = []string{
 	getPathRelativeToProjectRoot(
-		"/tests/hosts/host-go/build/host-go",
+		"/host-go/build/host-go",
 	),
 }
 
