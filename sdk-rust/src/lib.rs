@@ -1,3 +1,7 @@
+/*!
+This crate contains members to aid in the construction of a Rust [Lens Module](https://github.com/lens-vm/spec#abi---wasm-module-functions).
+*/
+
 use std::mem;
 use std::mem::ManuallyDrop;
 use std::io::{Cursor, Write};
