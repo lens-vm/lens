@@ -113,6 +113,8 @@ func LoadModule(path string, paramSets ...map[string]any) (module.Module, error)
 			return module.Module{}, err
 		}
 
+		// The `set_param` wasm function may error, in which case the error needs to be retrieved
+		// from memory using `pipes.GetItem`.
 		_, err = pipes.GetItem(memory.Data(), r.(module.MemSize))
 		if err != nil {
 			return module.Module{}, err
