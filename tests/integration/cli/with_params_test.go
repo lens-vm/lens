@@ -37,11 +37,27 @@ func TestWithParams(t *testing.T) {
 					Name: "John",
 					Age:  3,
 				},
+				{
+					Name: "Shahzad",
+					Age:  9,
+				},
+				{
+					Name: "Pavneet",
+					Age:  11,
+				},
 			},
 			ExpectedOutput: []Output{
 				{
 					MiddleName: "John",
 					Age:        3,
+				},
+				{
+					MiddleName: "Shahzad",
+					Age:        9,
+				},
+				{
+					MiddleName: "Pavneet",
+					Age:        11,
 				},
 			},
 		},
