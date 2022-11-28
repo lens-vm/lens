@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -21,6 +22,9 @@ type TestCase[TSource any, TResult any] struct {
 
 	// The set of values expected as output from the lens pipeline
 	ExpectedOutput []TResult
+
+	// The error expected to be returned during the transform
+	ExpectedError string
 }
 
 var hostExecutablePaths = []string{
@@ -54,7 +58,9 @@ func executeTest[TSource any, TResult any](t *testing.T, testCase TestCase[TSour
 
 	for _, hostPath := range hostExecutablePaths {
 		pipeLineCommand := exec.Command(hostPath, lensFilePath)
-		pipeLineCommand.Stderr = os.Stderr
+
+		var stderr bytes.Buffer
+		pipeLineCommand.Stderr = &stderr
 
 		stdin, err := pipeLineCommand.StdinPipe()
 		if err != nil {
@@ -81,7 +87,9 @@ func executeTest[TSource any, TResult any](t *testing.T, testCase TestCase[TSour
 
 		err = pipeLineCommand.Wait()
 		if err != nil {
-			t.Fatal(err)
+			if assertError(t, testCase.ExpectedError, err, stderr) {
+				return
+			}
 		}
 
 		outputBytes := stdout.Bytes()
@@ -95,4 +103,23 @@ func executeTest[TSource any, TResult any](t *testing.T, testCase TestCase[TSour
 		// We could just assert on the string/byte array, but this gives us clearer errors
 		assert.Equal(t, testCase.ExpectedOutput, output)
 	}
+}
+
+func assertError(t *testing.T, expectedError string, err error, stderr bytes.Buffer) bool {
+	stderrBytes := stderr.Bytes()
+	if _, isExistErr := err.(*exec.ExitError); isExistErr {
+		if expectedError != "" && strings.Contains(string(stderrBytes), expectedError) {
+			return true
+		}
+	}
+
+	// If it is unexpected we dont want to lose the stderr output
+	_, writeErr := os.Stderr.Write(stderrBytes)
+	if writeErr != nil {
+		// This should never happen, if it does there is a bug in the test code
+		t.Fatal(writeErr)
+	}
+
+	t.Fatal(err)
+	return false
 }

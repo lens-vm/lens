@@ -63,3 +63,48 @@ func TestWithParams(t *testing.T) {
 		},
 	)
 }
+
+func TestWithParamsReturnsErrorGivenBadParam(t *testing.T) {
+	type Input struct {
+		Name string
+		Age  int
+	}
+
+	type Output struct {
+		MiddleName string
+		Age        int
+	}
+
+	executeTest(
+		t,
+		TestCase[Input, Output]{
+			LensFile: `
+			{
+				"lenses": [
+					{
+						"path": "` + modules.WasmPath4 + `",
+						"arguments": {
+							"src": "NotAField",
+							"dst": "MiddleName"
+						}
+					}
+				]
+			}`,
+			Input: []Input{
+				{
+					Name: "John",
+					Age:  3,
+				},
+				{
+					Name: "Shahzad",
+					Age:  9,
+				},
+				{
+					Name: "Pavneet",
+					Age:  11,
+				},
+			},
+			ExpectedError: "The requested property was not found. Requested: NotAField",
+		},
+	)
+}
