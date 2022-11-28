@@ -108,3 +108,45 @@ func TestWithParamsReturnsErrorGivenBadParam(t *testing.T) {
 		},
 	)
 }
+
+func TestWithParamsReturnsErrorGivenNilParam(t *testing.T) {
+	type Input struct {
+		Name string
+		Age  int
+	}
+
+	type Output struct {
+		MiddleName string
+		Age        int
+	}
+
+	executeTest(
+		t,
+		TestCase[Input, Output]{
+			LensFile: `
+			{
+				"lenses": [
+					{
+						"path": "` + modules.WasmPath4 + `",
+						"arguments": null
+					}
+				]
+			}`,
+			Input: []Input{
+				{
+					Name: "John",
+					Age:  3,
+				},
+				{
+					Name: "Shahzad",
+					Age:  9,
+				},
+				{
+					Name: "Pavneet",
+					Age:  11,
+				},
+			},
+			ExpectedError: "Parameters have not been set.",
+		},
+	)
+}
