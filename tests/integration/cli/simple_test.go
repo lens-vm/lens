@@ -33,11 +33,27 @@ func TestSimple(t *testing.T) {
 					Name: "John",
 					Age:  3,
 				},
+				{
+					Name: "Fred",
+					Age:  5,
+				},
+				{
+					Name: "Orpheus",
+					Age:  7,
+				},
 			},
 			ExpectedOutput: []Output{
 				{
 					FullName: "John",
 					Age:      3,
+				},
+				{
+					FullName: "Fred",
+					Age:      5,
+				},
+				{
+					FullName: "Orpheus",
+					Age:      7,
 				},
 			},
 		},
