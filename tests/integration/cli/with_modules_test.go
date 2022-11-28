@@ -62,3 +62,59 @@ func TestSimpleWithModules(t *testing.T) {
 		},
 	)
 }
+
+// This test asserts that there are no issues running the same module multiple times
+func TestSimpleWithModulesRepeated(t *testing.T) {
+	type Value struct {
+		FullName string
+		Age      int
+	}
+
+	executeTest(
+		t,
+		TestCase[Value, Value]{
+			LensFile: `
+			{
+				"lenses": [
+					{
+						"path": "` + modules.WasmPath2 + `"
+					},
+					{
+						"path": "` + modules.WasmPath2 + `"
+					},
+					{
+						"path": "` + modules.WasmPath2 + `"
+					}
+				]
+			}`,
+			Input: []Value{
+				{
+					FullName: "John",
+					Age:      3,
+				},
+				{
+					FullName: "Fred",
+					Age:      5,
+				},
+				{
+					FullName: "Orpheus",
+					Age:      7,
+				},
+			},
+			ExpectedOutput: []Value{
+				{
+					FullName: "John",
+					Age:      6,
+				},
+				{
+					FullName: "Fred",
+					Age:      8,
+				},
+				{
+					FullName: "Orpheus",
+					Age:      10,
+				},
+			},
+		},
+	)
+}
