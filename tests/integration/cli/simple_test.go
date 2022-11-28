@@ -60,6 +60,51 @@ func TestSimple(t *testing.T) {
 	)
 }
 
+func TestSimpleWithNoModules(t *testing.T) {
+	type Input struct {
+		Name string
+		Age  int
+	}
+
+	executeTest(
+		t,
+		TestCase[Input, Input]{
+			LensFile: `
+			{
+				"lenses": []
+			}`,
+			Input: []Input{
+				{
+					Name: "John",
+					Age:  3,
+				},
+				{
+					Name: "Fred",
+					Age:  5,
+				},
+				{
+					Name: "Orpheus",
+					Age:  7,
+				},
+			},
+			ExpectedOutput: []Input{
+				{
+					Name: "John",
+					Age:  3,
+				},
+				{
+					Name: "Fred",
+					Age:  5,
+				},
+				{
+					Name: "Orpheus",
+					Age:  7,
+				},
+			},
+		},
+	)
+}
+
 func TestSimpleWithEmptyItem(t *testing.T) {
 	type Input struct {
 		Name string
