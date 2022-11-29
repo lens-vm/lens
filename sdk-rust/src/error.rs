@@ -4,8 +4,8 @@ use std::string::FromUtf8Error;
 
 #[derive(Debug)]
 pub enum Error {
-    FromUtf8Error(FromUtf8Error),
-    TryFromIntError(TryFromIntError),
+    FromUtf8(FromUtf8Error),
+    TryFromInt(TryFromIntError),
     /// Any [I/O errors](https://doc.rust-lang.org/std/io/struct.Error.html) returned from a Lens function.
     Io(io::Error),
     /// Any [Json errors](https://docs.rs/serde_json/latest/serde_json/struct.Error.html) returned from a Lens function.
@@ -19,8 +19,8 @@ impl error::Error for Error { }
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Error::FromUtf8Error(ref error) => error.fmt(f),
-            Error::TryFromIntError(ref error) => error.fmt(f),
+            Error::FromUtf8(ref error) => error.fmt(f),
+            Error::TryFromInt(ref error) => error.fmt(f),
             Error::Io(ref error) => error.fmt(f),
             Error::Json(ref error) => error.fmt(f),
             Error::Lens(ref error) => error.fmt(f),
@@ -30,13 +30,13 @@ impl fmt::Display for Error {
 
 impl From<FromUtf8Error> for Error {
     fn from(err: FromUtf8Error) -> Error {
-        Error::FromUtf8Error(err)
+        Error::FromUtf8(err)
     }
 }
 
 impl From<TryFromIntError> for Error {
     fn from(err: TryFromIntError) -> Error {
-        Error::TryFromIntError(err)
+        Error::TryFromInt(err)
     }
 }
 
