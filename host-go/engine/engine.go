@@ -44,6 +44,15 @@ func append[TSource any, TResult any](src enumerable.Enumerable[TSource], module
 
 // LoadModule loads a lens at the given path.
 func LoadModule(path string, paramSets ...map[string]any) (module.Module, error) {
+	return loadModule(path, "transform", paramSets...)
+}
+
+// LoadInverse loads the inverse of a lens at the given path.
+func LoadInverse(path string, paramSets ...map[string]any) (module.Module, error) {
+	return loadModule(path, "inverse", paramSets...)
+}
+
+func loadModule(path string, functionName string, paramSets ...map[string]any) (module.Module, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return module.Module{}, err
@@ -73,7 +82,7 @@ func LoadModule(path string, paramSets ...map[string]any) (module.Module, error)
 		return module.Module{}, err
 	}
 
-	transform, err := instance.Exports.GetRawFunction("transform")
+	transform, err := instance.Exports.GetRawFunction(functionName)
 	if err != nil {
 		return module.Module{}, err
 	}

@@ -13,6 +13,7 @@ type Lens struct {
 
 type LensModule struct {
 	Path      string         `json:"path"`
+	Inverse   bool           `json:"inverse"`
 	Arguments map[string]any `json:"arguments"`
 }
 
@@ -32,6 +33,7 @@ func Load(path string) (model.Lens, error) {
 	for i, lensModule := range lensFile.Lenses {
 		lenses[i] = model.LensModule{
 			Path:      lensModule.Path,
+			Inverse:   lensModule.Inverse,
 			Arguments: lensModule.Arguments,
 		}
 	}
