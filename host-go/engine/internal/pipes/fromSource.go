@@ -50,8 +50,8 @@ func (s *fromSource[TSource, TResult]) Next() (bool, error) {
 func (s *fromSource[TSource, TResult]) Value() (TResult, error) {
 	var t TResult
 
-	item, err := getItem(s.module.GetData(), s.currentIndex)
-	if err != nil {
+	item, err := GetItem(s.module.GetData(), s.currentIndex)
+	if err != nil || item == nil {
 		return t, err
 	}
 	jsonBytes := item[module.TypeIdSize+module.LenSize:]
@@ -66,7 +66,7 @@ func (s *fromSource[TSource, TResult]) Value() (TResult, error) {
 }
 
 func (s *fromSource[TSource, TResult]) Bytes() ([]byte, error) {
-	return getItem(s.module.GetData(), s.currentIndex)
+	return GetItem(s.module.GetData(), s.currentIndex)
 }
 
 func (s *fromSource[TSource, TResult]) Reset() {

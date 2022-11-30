@@ -10,3 +10,5 @@ tests/modules/as_wasm32_simple/package-lock.json
 tests/modules/rust_wasm32_rename/Cargo.lock
 tests/modules/rust_wasm32_rename/target
 tests/modules/rust_wasm32_rename/pkg
+sdk-rust/target
+sdk-rust/Cargo.lock

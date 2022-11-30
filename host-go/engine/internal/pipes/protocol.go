@@ -8,8 +8,8 @@ import (
 	"github.com/lens-vm/lens/host-go/engine/module"
 )
 
-// getItem returns the item at the given index.  This includes the length specifier.
-func getItem(src []byte, startIndex module.MemSize) ([]byte, error) {
+// GetItem returns the item at the given index.  This includes the length specifier.
+func GetItem(src []byte, startIndex module.MemSize) ([]byte, error) {
 	typeBuffer := make([]byte, module.TypeIdSize)
 	copy(typeBuffer, src[startIndex:startIndex+module.TypeIdSize])
 	var typeId module.TypeIdType
@@ -17,6 +17,10 @@ func getItem(src []byte, startIndex module.MemSize) ([]byte, error) {
 	err := binary.Read(reader, module.TypeIdByteOrder, &typeId)
 	if err != nil {
 		return nil, err
+	}
+
+	if typeId == module.NilTypeID {
+		return nil, nil
 	}
 
 	lenBuffer := make([]byte, module.LenSize)

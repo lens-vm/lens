@@ -1,0 +1,12 @@
+[package]
+name = "lens_sdk"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["lib"]
+
+[dependencies]
+serde = "1.0"
+serde_json = "1.0.87"
+byteorder = "1.4.3"

@@ -133,5 +133,32 @@ func TestWasm32PipelineWithAddtionalParamsErrors(t *testing.T) {
 	assert.True(t, hasNext)
 
 	_, err = pipe.Value()
-	assert.ErrorContains(t, err, "NotAField was not found")
+	assert.ErrorContains(t, err, "The requested property was not found. Requested: NotAField")
+}
+
+func TestWasm32PipelineWithAddtionalParamsErrorsAndNilItem(t *testing.T) {
+	module, err := engine.LoadModule(
+		modules.WasmPath4,
+		map[string]any{
+			"src": "FirstName",
+			"dst": "FullName",
+		},
+	)
+	if err != nil {
+		t.Error(err)
+	}
+
+	source := enumerable.New([]*type1{nil})
+
+	pipe := engine.Append[*type1, *type2](source, module)
+
+	hasNext, err := pipe.Next()
+	if err != nil {
+		t.Error(err)
+	}
+	assert.True(t, hasNext)
+
+	value, err := pipe.Value()
+	require.Nil(t, err)
+	assert.Nil(t, value)
 }

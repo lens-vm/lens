@@ -35,6 +35,7 @@ var LenByteOrder = binary.LittleEndian
 type MemSize = int32
 
 const (
+	NilTypeID  TypeIdType = 0
 	JSONTypeID TypeIdType = 1
 )
 
