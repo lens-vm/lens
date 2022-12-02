@@ -1,5 +1,6 @@
 package tests
 
+/*
 import (
 	"bytes"
 	"encoding/binary"
@@ -141,3 +142,4 @@ func TestAppendLensWithoutWasm(t *testing.T) {
 	}
 	assert.False(t, hasNext)
 }
+*/
