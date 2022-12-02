@@ -16,41 +16,56 @@ import (
 )
 
 type wRuntime struct {
-	runtime wazero.Runtime
+	compilationCache wazero.CompilationCache
 }
 
 var _ module.Runtime = (*wRuntime)(nil)
 
+// New creates a new wazero wasm runtime.
+//
+// WARNING: This runtime does not current allow for instance reuse within a single pipeline.
+// Please see https://github.com/lens-vm/lens/issues/71 for more info.
 func New() module.Runtime {
-	ctx := context.TODO()
 	return &wRuntime{
-		runtime: wazero.NewRuntime(ctx),
+		compilationCache: wazero.NewCompilationCache(),
 	}
 }
 
 type wModule struct {
-	runtime wazero.Runtime
-	module  wazero.CompiledModule
+	compilationCache wazero.CompilationCache
+	moduleBytes      []byte
 }
 
 var _ module.Module = (*wModule)(nil)
 
 func (rt *wRuntime) NewModule(wasmBytes []byte) (module.Module, error) {
-	ctx := context.TODO()
-	compiledWasm, err := rt.runtime.CompileModule(ctx, wasmBytes)
-	if err != nil {
-		return nil, err
-	}
-
 	return &wModule{
-		runtime: rt.runtime,
-		module:  compiledWasm,
+		compilationCache: rt.compilationCache,
+		moduleBytes:      wasmBytes,
 	}, nil
 }
 
 func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) (module.Instance, error) {
 	ctx := context.TODO()
-	instance, err := m.runtime.InstantiateModule(ctx, m.module, wazero.NewModuleConfig().WithName(""))
+	runtimeConfig := wazero.NewRuntimeConfig().WithCompilationCache(m.compilationCache)
+	runtime := wazero.NewRuntimeWithConfig(ctx, runtimeConfig)
+
+	var nextFunction = func() module.MemSize { return 0 }
+	_, err := runtime.NewHostModuleBuilder("lens").
+		NewFunctionBuilder().
+		WithFunc(func(ctx context.Context) module.MemSize {
+			return nextFunction()
+		}).
+		Export("next").
+		Instantiate(ctx)
+	if err != nil {
+		return module.Instance{}, err
+	}
+
+	instance, err := runtime.Instantiate(ctx, m.moduleBytes)
+	if err != nil {
+		return module.Instance{}, err
+	}
 
 	memory := instance.ExportedMemory("memory")
 	if memory == nil {
@@ -120,8 +135,12 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 			}
 			return module.MemSize(r[0]), nil
 		},
-		Transform: func(u module.MemSize) (module.MemSize, error) {
-			r, err := transform.Call(ctx, uint64(u))
+		Transform: func(next func() module.MemSize) (module.MemSize, error) {
+			// By assigning the next function immediately prior to calling transform, we allow multiple
+			// pipeline stages to share the same wasm instance - provided they are not called concurrently.
+			// This also allows module state to be shared across pipeline stages.
+			nextFunction = next
+			r, err := transform.Call(ctx)
 			if err != nil {
 				return 0, err
 			}

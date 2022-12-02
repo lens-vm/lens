@@ -30,23 +30,16 @@ func NewFromPipe[TSource any, TResult any](
 var _ Pipe[int] = (*fromPipe[bool, int])(nil)
 
 func (s *fromPipe[TSource, TResult]) Next() (bool, error) {
-	hasNext, err := s.source.Next()
-	if !hasNext || err != nil {
-		return hasNext, err
+	index, err := s.instance.Transform(s.mustGetNext)
+	if err != nil {
+		return false, err
 	}
 
-	value, err := s.source.Bytes()
-	if err != nil {
+	if module.TypeIdType(s.instance.GetData()[index]).IsEOS() {
 		return false, nil
 	}
 
-	// We do this here to keep the work (and errors) in the `Next` call
-	result, err := s.transport(value)
-	if err != nil {
-		return false, nil
-	}
-
-	s.currentIndex = result
+	s.currentIndex = index
 	return true, nil
 }
 
@@ -75,18 +68,39 @@ func (s *fromPipe[TSource, TResult]) Reset() {
 	s.source.Reset()
 }
 
-func (s *fromPipe[TSource, TResult]) transport(sourceItem []byte) (module.MemSize, error) {
-	index, err := s.instance.Alloc(module.MemSize(len(sourceItem)))
+// mustGetNext tries to get the next value from source and copy it into the memory buffer.
+//
+// If there are no more values in source it will write an EOS message. If an error is
+// generated, it will attempt to write the error to the memory buffer - if the writing of the
+// error to the buffer fails it will panic.
+func (s *fromPipe[TSource, TResult]) mustGetNext() module.MemSize {
+	index, err := s.getNext()
+	if err != nil {
+		return mustWriteErr(s.instance, err)
+	}
+
+	return index
+}
+
+func (s *fromPipe[TSource, TResult]) getNext() (module.MemSize, error) {
+	hasNext, err := s.source.Next()
+	if err != nil {
+		return 0, err
+	}
+	if !hasNext {
+		return writeEOS(s.instance)
+	}
+
+	value, err := s.source.Bytes()
 	if err != nil {
 		return 0, err
 	}
 
-	copy(s.instance.GetData()[index:], sourceItem)
-
-	index, err = s.instance.Transform(index)
+	index, err := s.instance.Alloc(module.MemSize(len(value)))
 	if err != nil {
 		return 0, err
 	}
 
+	copy(s.instance.GetData()[index:], value)
 	return index, nil
 }

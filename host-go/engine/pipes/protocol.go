@@ -36,7 +36,7 @@ func GetItem(src []byte, startIndex module.MemSize) ([]byte, error) {
 		return nil, err
 	}
 
-	if module.IsError(typeId) {
+	if typeId.IsError() {
 		return nil, errors.New(
 			string(
 				src[startIndex+module.TypeIdSize+module.LenSize : startIndex+module.TypeIdSize+module.MemSize(len)+module.LenSize],
@@ -57,17 +57,57 @@ func WriteItem(typeId module.TypeIdType, src []byte, dst []byte) error {
 	if err != nil {
 		return err
 	}
+	copy(dst, typeWriter.Bytes())
 
-	len := module.LenType(len(src))
-	lenWriter := bytes.NewBuffer([]byte{})
-	err = binary.Write(lenWriter, module.LenByteOrder, len)
-	if err != nil {
-		return err
+	switch typeId {
+	case module.EOSTypeID:
+		// no-op - End of stream messages have no value component that needs writing
+
+	default:
+		len := module.LenType(len(src))
+		lenWriter := bytes.NewBuffer([]byte{})
+		err = binary.Write(lenWriter, module.LenByteOrder, len)
+		if err != nil {
+			return err
+		}
+
+		copy(dst[module.TypeIdSize:], lenWriter.Bytes())
+		copy(dst[module.TypeIdSize+module.LenSize:], src)
 	}
 
-	copy(dst, typeWriter.Bytes())
-	copy(dst[module.TypeIdSize:], lenWriter.Bytes())
-	copy(dst[module.TypeIdSize+module.LenSize:], src)
-
 	return nil
+}
+
+// writeEOS writes the end-of-stream type id to the module memory and returns its location.
+func writeEOS(m module.Instance) (module.MemSize, error) {
+	index, err := m.Alloc(module.TypeIdSize)
+	if err != nil {
+		return 0, err
+	}
+
+	err = WriteItem(module.EOSTypeID, []byte{}, m.GetData()[index:])
+	if err != nil {
+		return 0, err
+	}
+
+	return index, nil
+}
+
+// mustWriteErr writes the given error to the given module's memory, returning its location.
+//
+// Will panic if an error is generated during writing.
+func mustWriteErr(m module.Instance, err error) module.MemSize {
+	errText := err.Error()
+
+	index, err := m.Alloc(module.TypeIdSize + module.LenSize + int32(len(errText)))
+	if err != nil {
+		panic(err)
+	}
+
+	err = WriteItem(module.ErrTypeID, []byte(errText), m.GetData()[index:])
+	if err != nil {
+		panic(err)
+	}
+
+	return index
 }

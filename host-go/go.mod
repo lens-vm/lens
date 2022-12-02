@@ -6,7 +6,7 @@ require (
 	github.com/lens-vm/lens/tests/modules v0.0.0-20230720125121-328ae81f5744
 	github.com/sourcenetwork/immutable v0.2.0
 	github.com/stretchr/testify v1.8.1
-	github.com/tetratelabs/wazero v1.3.1
+	github.com/tetratelabs/wazero v1.5.0
 	github.com/wasmerio/wasmer-go v1.0.4
 )
 

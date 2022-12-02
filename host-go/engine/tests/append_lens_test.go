@@ -49,7 +49,8 @@ func TestAppendLensWithoutWasm(t *testing.T) {
 				var arbitraryIndex module.MemSize = 5
 				return arbitraryIndex, nil
 			},
-			Transform: func(startIndex module.MemSize) (module.MemSize, error) {
+			Transform: func(next func() module.MemSize) (module.MemSize, error) {
+				startIndex := next()
 				typeBuffer := make([]byte, module.TypeIdSize)
 				copy(typeBuffer, memory[startIndex:startIndex+module.TypeIdSize])
 				var inputTypeId module.TypeIdType
@@ -57,6 +58,18 @@ func TestAppendLensWithoutWasm(t *testing.T) {
 				err := binary.Read(buf, module.TypeIdByteOrder, &inputTypeId)
 				if err != nil {
 					return 0, err
+				}
+
+				if inputTypeId.IsEOS() {
+					arbitraryReturnIndex := math.MaxUint16 / 4
+					typeWriter := bytes.NewBuffer([]byte{})
+					err = binary.Write(typeWriter, module.TypeIdByteOrder, int8(module.EOSTypeID))
+					if err != nil {
+						return 0, err
+					}
+					dst := memory[arbitraryReturnIndex:]
+					copy(dst, typeWriter.Bytes())
+					return module.MemSize(arbitraryReturnIndex), nil
 				}
 
 				lenBuffer := make([]byte, module.LenSize)

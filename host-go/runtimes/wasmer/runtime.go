@@ -30,7 +30,8 @@ func New() module.Runtime {
 }
 
 type wModule struct {
-	module *wasmer.Module
+	runtime *wRuntime
+	module  *wasmer.Module
 }
 
 var _ module.Module = (*wModule)(nil)
@@ -42,12 +43,34 @@ func (rt *wRuntime) NewModule(wasmBytes []byte) (module.Module, error) {
 	}
 
 	return &wModule{
-		module: module,
+		runtime: rt,
+		module:  module,
 	}, nil
 }
 
 func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) (module.Instance, error) {
 	importObject := wasmer.NewImportObject()
+
+	var nextFunction = func() module.MemSize { return 0 }
+	// Register the `lens.next` function required as an import for wasm lens modules
+	importObject.Register(
+		"lens",
+		map[string]wasmer.IntoExtern{
+			"next": wasmer.NewFunction(
+				m.runtime.store,
+				wasmer.NewFunctionType(
+					wasmer.NewValueTypes(),
+					// Warning: wasmer requires a concrete type here and as such this line is coupled to the module's runtime
+					wasmer.NewValueTypes(wasmer.I32),
+				),
+				func(v []wasmer.Value) ([]wasmer.Value, error) {
+					r := nextFunction()
+					return []wasmer.Value{wasmer.NewI32(r)}, nil
+				},
+			),
+		},
+	)
+
 	instance, err := wasmer.NewInstance(m.module, importObject)
 	if err != nil {
 		return module.Instance{}, err
@@ -119,8 +142,12 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 			}
 			return r.(module.MemSize), err
 		},
-		Transform: func(u module.MemSize) (module.MemSize, error) {
-			r, err := transform.Call(u)
+		Transform: func(next func() module.MemSize) (module.MemSize, error) {
+			// By assigning the next function immediately prior to calling transform, we allow multiple
+			// pipeline stages to share the same wasm instance - provided they are not called concurrently.
+			// This also allows module state to be shared across pipeline stages.
+			nextFunction = next
+			r, err := transform.Call()
 			if err != nil {
 				return 0, err
 			}
