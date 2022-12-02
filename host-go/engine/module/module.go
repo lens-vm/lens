@@ -7,7 +7,9 @@ type Module struct {
 	Alloc func(size MemSize) (MemSize, error)
 
 	// Transform transforms the data stored at the given start index, returning the start index of the result.
-	Transform func(startIndex MemSize) (MemSize, error)
+	//
+	// The next function provided should return a pointer to the next source item to be transformed.
+	Transform func(next func() MemSize) (MemSize, error)
 
 	// GetData returns the current state of the linear memory that this module uses.
 

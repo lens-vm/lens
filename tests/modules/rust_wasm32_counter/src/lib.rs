@@ -1,5 +1,7 @@
 use std::error::Error;
 use serde::{Serialize, Deserialize};
+use atomic_counter::{AtomicCounter, RelaxedCounter};
+use once_cell::sync::Lazy;
 use lens_sdk::StreamOption;
 use lens_sdk::option::StreamOption::{Some, None, EndOfStream};
 
@@ -8,21 +10,15 @@ extern "C" {
     fn next() -> *mut u8;
 }
 
-#[derive(Deserialize)]
-pub struct Input {
-    #[serde(rename(deserialize = "Name"))]
+#[derive(Serialize, Deserialize)]
+pub struct Value {
+    #[serde(rename = "Id")]
+	pub id: usize,
+    #[serde(rename = "Name")]
     pub name: String,
-    #[serde(rename(deserialize = "Age"))]
-	pub age: u64,
 }
 
-#[derive(Serialize)]
-pub struct Output {
-    #[serde(rename(serialize = "FullName"))]
-    pub full_name: String,
-    #[serde(rename(serialize = "Age"))]
-	pub age: u64,
-}
+static COUNTER: Lazy<RelaxedCounter> = Lazy::new(|| RelaxedCounter::new(0));
 
 #[no_mangle]
 pub extern fn alloc(size: usize) -> *mut u8 {
@@ -43,19 +39,21 @@ pub extern fn transform() -> *mut u8 {
 
 fn try_transform() -> Result<StreamOption<Vec<u8>>, Box<dyn Error>> {
     let ptr = unsafe { next() };
-    let input = match lens_sdk::try_from_mem::<Input>(ptr)? {
+    let input = match lens_sdk::try_from_mem::<Value>(ptr)? {
         Some(v) => v,
         // Implementations of `transform` are free to handle nil however they like. In this
         // implementation we chose to return nil given a nil input.
         None => return Ok(None),
-        EndOfStream => return Ok(EndOfStream)
+        EndOfStream => return Ok(EndOfStream),
     };
-    
-    let result = Output {
-        full_name: input.name,
-        age: input.age,
+
+    COUNTER.inc();
+
+    let result = Value {
+        id: COUNTER.get(),
+        name: input.name,
     };
-    
+
     let result_json = serde_json::to_vec(&result)?;
     Ok(Some(result_json))
 }

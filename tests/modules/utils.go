@@ -27,6 +27,21 @@ var WasmPath4 string = getPathRelativeToProjectRoot(
 	"/tests/modules/rust_wasm32_rename/target/wasm32-unknown-unknown/debug/rust_wasm32_rename.wasm",
 )
 
+// WasmPath5 contains a wasm32 rust lens that sets an id using a counter.
+var WasmPath5 string = getPathRelativeToProjectRoot(
+	"/tests/modules/rust_wasm32_counter/target/wasm32-unknown-unknown/debug/rust_wasm32_counter.wasm",
+)
+
+// WasmPath6 contains a wasm32 rust lens that only returns values where `__type` == "pass".
+var WasmPath6 string = getPathRelativeToProjectRoot(
+	"/tests/modules/rust_wasm32_filter/target/wasm32-unknown-unknown/debug/rust_wasm32_filter.wasm",
+)
+
+// WasmPath7 contains a wasm32 rust lens that turns books into multiple pages.
+var WasmPath7 string = getPathRelativeToProjectRoot(
+	"/tests/modules/rust_wasm32_normalize/target/wasm32-unknown-unknown/debug/rust_wasm32_normalize.wasm",
+)
+
 func getPathRelativeToProjectRoot(relativePath string) string {
 	_, filename, _, _ := runtime.Caller(0)
 	root := path.Dir(path.Dir(path.Dir(filename)))

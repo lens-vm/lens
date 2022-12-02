@@ -26,23 +26,16 @@ func NewFromPipe[TSource any, TResult any](
 var _ Pipe[int] = (*fromPipe[bool, int])(nil)
 
 func (s *fromPipe[TSource, TResult]) Next() (bool, error) {
-	hasNext, err := s.source.Next()
-	if !hasNext || err != nil {
-		return hasNext, err
+	index, err := s.module.Transform(s.mustGetNext)
+	if err != nil {
+		return false, err
 	}
 
-	value, err := s.source.Bytes()
-	if err != nil {
+	if module.IsEOS(module.TypeIdType(s.module.GetData()[index])) {
 		return false, nil
 	}
 
-	// We do this here to keep the work (and errors) in the `Next` call
-	result, err := s.transport(value)
-	if err != nil {
-		return false, nil
-	}
-
-	s.currentIndex = result
+	s.currentIndex = index
 	return true, nil
 }
 
@@ -71,18 +64,35 @@ func (s *fromPipe[TSource, TResult]) Reset() {
 	s.source.Reset()
 }
 
-func (s *fromPipe[TSource, TResult]) transport(sourceItem []byte) (module.MemSize, error) {
-	index, err := s.module.Alloc(module.MemSize(len(sourceItem)))
+func (s *fromPipe[TSource, TResult]) mustGetNext() module.MemSize {
+	index, err := s.getNext()
+	if err != nil {
+		return mustWriteErr(s.module, err)
+	}
+
+	return index
+}
+
+func (s *fromPipe[TSource, TResult]) getNext() (module.MemSize, error) {
+	hasNext, err := s.source.Next()
 	if err != nil {
 		return 0, err
 	}
 
-	copy(s.module.GetData()[index:], sourceItem)
+	if !hasNext {
+		return writeEOS(s.module)
+	}
 
-	index, err = s.module.Transform(index)
+	value, err := s.source.Bytes()
 	if err != nil {
 		return 0, err
 	}
 
+	index, err := s.module.Alloc(module.MemSize(len(value)))
+	if err != nil {
+		return 0, err
+	}
+
+	copy(s.module.GetData()[index:], value)
 	return index, nil
 }

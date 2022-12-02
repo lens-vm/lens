@@ -27,23 +27,16 @@ func NewFromSource[TSource any, TResult any](
 var _ Pipe[int] = (*fromSource[bool, int])(nil)
 
 func (s *fromSource[TSource, TResult]) Next() (bool, error) {
-	hasNext, err := s.source.Next()
-	if !hasNext || err != nil {
-		return hasNext, err
+	index, err := s.module.Transform(s.mustGetNext)
+	if err != nil {
+		return false, err
 	}
 
-	value, err := s.source.Value()
-	if err != nil {
+	if module.IsEOS(module.TypeIdType(s.module.GetData()[index])) {
 		return false, nil
 	}
 
-	// We do this here to keep the work (and errors) in the `Next` call
-	result, err := s.transport(value)
-	if err != nil {
-		return false, nil
-	}
-
-	s.currentIndex = result
+	s.currentIndex = index
 	return true, nil
 }
 
@@ -73,26 +66,43 @@ func (s *fromSource[TSource, TResult]) Reset() {
 	s.source.Reset()
 }
 
-func (s *fromSource[TSource, TResult]) transport(sourceItem TSource) (module.MemSize, error) {
-	sourceBytes, err := json.Marshal(sourceItem)
+func (s *fromSource[TSource, TResult]) mustGetNext() module.MemSize {
+	index, err := s.getNext()
+	if err != nil {
+		return mustWriteErr(s.module, err)
+	}
+
+	return index
+}
+
+func (s *fromSource[TSource, TResult]) getNext() (module.MemSize, error) {
+	hasNext, err := s.source.Next()
 	if err != nil {
 		return 0, err
 	}
 
-	index, err := s.module.Alloc(module.TypeIdSize + module.MemSize(len(sourceBytes)) + module.LenSize)
+	if !hasNext {
+		return writeEOS(s.module)
+	}
+
+	sourceItem, err := s.source.Value()
 	if err != nil {
 		return 0, err
 	}
 
-	err = WriteItem(module.JSONTypeID, sourceBytes, s.module.GetData()[index:])
+	value, err := json.Marshal(sourceItem)
 	if err != nil {
 		return 0, err
 	}
 
-	index, err = s.module.Transform(index)
+	index, err := s.module.Alloc(module.TypeIdSize + module.LenSize + module.MemSize(len(value)))
 	if err != nil {
 		return 0, err
 	}
 
+	err = WriteItem(module.JSONTypeID, value, s.module.GetData()[index:])
+	if err != nil {
+		return 0, err
+	}
 	return index, nil
 }

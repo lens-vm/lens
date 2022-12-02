@@ -14,11 +14,17 @@ pub mod result;
 /// Error types returned by lens_sdk.
 pub mod error;
 
+/// Option type returned by lens_sdk.
+pub mod option;
+
 /// Alias for an sdk [Error](error/enum.Error.html).
 pub type Error = error::Error;
 
 /// Alias for an sdk [Result](result/type.Result.html).
 pub type Result<T> = result::Result<T>;
+
+/// Alias for an sdk [StreamOption](option/enum.StreamOption.html).
+pub type StreamOption<T> = option::StreamOption<T>;
 
 /// A type id that denotes a simple string-based error.
 ///
@@ -27,12 +33,21 @@ pub type Result<T> = result::Result<T>;
 /// handled accordingly.
 pub const ERROR_TYPE_ID: i8 = -1;
 
+/// A type id that denotes a nil value.
+pub const NIL_TYPE_ID: i8 = 0;
+
 /// A type id that denotes a json value.
 ///
 /// If present at the beginning of a byte array being read by a [lens host](https://github.com/lens-vm/lens#Hosts)
 /// or [try_from_mem](fn.try_from_mem.html), the byte array will be treated as a json value and will be
 /// handled accordingly.
 pub const JSON_TYPE_ID: i8 = 1;
+
+/// A type id that donates the end of stream.
+///
+/// If recieved it signals that the end of the stream has been reached and that the source will no longer yield
+/// new values.
+pub const EOS_TYPE_ID: i8 = i8::MAX;
 
 /// Returns a nil pointer.
 ///
@@ -73,7 +88,7 @@ pub fn alloc(size: usize) -> *mut u8 {
 ///
 /// This function will return an [Error](error/enum.Error.html) if the data at the given location is not in the expected
 /// format.
-pub fn try_from_mem<TOutput: for<'a> Deserialize<'a>>(ptr: *mut u8) -> Result<Option<TOutput>> {
+pub fn try_from_mem<TOutput: for<'a> Deserialize<'a>>(ptr: *mut u8) -> Result<StreamOption<TOutput>> {
     let type_vec: Vec<u8> = unsafe {
         Vec::from_raw_parts(ptr, mem::size_of::<i8>(), mem::size_of::<i8>())
     };
@@ -82,8 +97,11 @@ pub fn try_from_mem<TOutput: for<'a> Deserialize<'a>>(ptr: *mut u8) -> Result<Op
     let mut type_rdr = ManuallyDrop::new(type_rdr);
 
     let type_id: i8  = type_rdr.read_i8()?;
-    if type_id == 0 {
-        return Ok(None)
+    if type_id == NIL_TYPE_ID {
+        return Ok(StreamOption::None)
+    }
+    if type_id == EOS_TYPE_ID {
+        return Ok(StreamOption::EndOfStream)
     }
     if type_id < 0 {
         return Result::from(error::LensError::InputErrorUnsupportedError)
@@ -112,8 +130,10 @@ pub fn try_from_mem<TOutput: for<'a> Deserialize<'a>>(ptr: *mut u8) -> Result<Op
     // It is possible for null json values to reach this line, particularly if sourced directly
     // from a 3rd party module, so we ensure that we parse to option as well as the earlier type_id
     // checks.
-    let result = serde_json::from_str::<Option<TOutput>>(&json_string)?;
-    Ok(result)
+    Ok(match serde_json::from_str::<Option<TOutput>>(&json_string)? {
+        Some(v) => StreamOption::Some(v),
+        None => StreamOption::None,
+    })
 }
 
 /// Write the given `message` bytes to memory, returning a pointer to the first byte.

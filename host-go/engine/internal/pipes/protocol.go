@@ -67,3 +67,37 @@ func WriteItem(typeId module.TypeIdType, src []byte, dst []byte) error {
 
 	return nil
 }
+
+// writeEOS writes the end-of-stream type id to the module memory and returns its location.
+func writeEOS(m module.Module) (module.MemSize, error) {
+	index, err := m.Alloc(module.TypeIdSize)
+	if err != nil {
+		return 0, err
+	}
+
+	err = WriteItem(module.EOSTypeID, []byte{}, m.GetData()[index:])
+	if err != nil {
+		return 0, err
+	}
+
+	return index, nil
+}
+
+// mustWriteErr writes the given error to the given module's memory, returning its location.
+//
+// Will panic if an error is generated during writing.
+func mustWriteErr(m module.Module, err error) module.MemSize {
+	errText := err.Error()
+
+	index, err := m.Alloc(module.TypeIdSize + module.LenSize + int32(len(errText)))
+	if err != nil {
+		panic(err)
+	}
+
+	err = WriteItem(module.ErrTypeID, []byte(errText), m.GetData()[index:])
+	if err != nil {
+		panic(err)
+	}
+
+	return index
+}
