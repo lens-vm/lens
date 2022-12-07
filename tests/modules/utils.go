@@ -11,6 +11,8 @@ var WasmPath1 string = getPathRelativeToProjectRoot(
 )
 
 // WasmPath2 contains a simple wasm32 rust lens that takes an item of `type2` and adds 1 to its age.
+//
+// Module also supplies an inverse function.
 var WasmPath2 string = getPathRelativeToProjectRoot(
 	"tests/modules/rust_wasm32_simple2/target/wasm32-unknown-unknown/debug/rust_wasm32_simple2.wasm",
 )

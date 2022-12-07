@@ -20,7 +20,13 @@ func Load[TSource any, TResult any](path string, src enumerable.Enumerable[TSour
 
 	modules := []module.Module{}
 	for _, lensModule := range lensConfig.Lenses {
-		module, err := engine.LoadModule(lensModule.Path, lensModule.Arguments)
+		var module module.Module
+		var err error
+		if lensModule.Inverse {
+			module, err = engine.LoadInverse(lensModule.Path, lensModule.Arguments)
+		} else {
+			module, err = engine.LoadModule(lensModule.Path, lensModule.Arguments)
+		}
 		if err != nil {
 			return nil, err
 		}
