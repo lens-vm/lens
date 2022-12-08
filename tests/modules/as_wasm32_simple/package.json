@@ -8,7 +8,7 @@
   },
   "devDependencies": {
     "asbuild": "^0.2.0",
-    "assemblyscript": "^0.22.0"
+    "assemblyscript": "^0.25.0"
   },
   "type": "module",
   "dependencies": {
