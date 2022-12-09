@@ -52,6 +52,8 @@ func LoadInverse(path string, paramSets ...map[string]any) (module.Module, error
 	return loadModule(path, "inverse", paramSets...)
 }
 
+type NextFunc func() module.MemSize
+
 func loadModule(path string, functionName string, paramSets ...map[string]any) (module.Module, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
@@ -68,11 +70,7 @@ func loadModule(path string, functionName string, paramSets ...map[string]any) (
 
 	importObject := wasmer.NewImportObject()
 
-	// We require a non-nil placeholder else Go will panic upon reassignment (nil pointer de-reference)
-	placeholderNext := func() module.MemSize { return 0 }
-	// By using a pointer to a function here we allow the function to be assigned after the wasm instance
-	// has been created.
-	nextFunction := &placeholderNext
+	var nextFunction NextFunc
 	importObject.Register(
 		"lens",
 		map[string]wasmer.IntoExtern{
@@ -84,7 +82,7 @@ func loadModule(path string, functionName string, paramSets ...map[string]any) (
 					wasmer.NewValueTypes(wasmer.I32),
 				),
 				func(v []wasmer.Value) ([]wasmer.Value, error) {
-					r := (*nextFunction)()
+					r := nextFunction()
 					return []wasmer.Value{wasmer.NewI32(r)}, nil
 				},
 			),
@@ -166,7 +164,7 @@ func loadModule(path string, functionName string, paramSets ...map[string]any) (
 			// By assigning the next function immediately prior to calling transform, we allow multiple
 			// pipeline stages to share the same wasm instance - provided they are not called concurrently.
 			// This also allows module state to be shared across pipeline stages.
-			*nextFunction = next
+			nextFunction = next
 			r, err := transform.Call()
 			if err != nil {
 				return 0, err
