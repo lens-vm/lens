@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/lens-vm/lens/host-go/config/internal/model"
+	"github.com/lens-vm/lens/host-go/config/model"
 )
 
 type Lens struct {
