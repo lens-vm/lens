@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/lens-vm/lens/host-go/config/internal/json"
+	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/lens-vm/lens/host-go/engine"
 	"github.com/lens-vm/lens/host-go/engine/module"
 	"github.com/sourcenetwork/immutable/enumerable"
@@ -18,6 +19,13 @@ func LoadFromFile[TSource any, TResult any](path string, src enumerable.Enumerab
 		return nil, err
 	}
 
+	return Load[TSource, TResult](lensConfig, src)
+}
+
+// Load constructs a lens from the given config and applies it to the provided src.
+//
+// It does not enumerate the src.
+func Load[TSource any, TResult any](lensConfig model.Lens, src enumerable.Enumerable[TSource]) (enumerable.Enumerable[TResult], error) {
 	modules := []module.Module{}
 	for _, lensModule := range lensConfig.Lenses {
 		var module module.Module
