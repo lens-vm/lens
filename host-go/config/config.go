@@ -7,10 +7,10 @@ import (
 	"github.com/sourcenetwork/immutable/enumerable"
 )
 
-// Load loads a lens file at the given path and applies it to the provided src.
+// LoadFromFile loads a lens file at the given path and applies it to the provided src.
 //
 // It does not enumerate the src.
-func Load[TSource any, TResult any](path string, src enumerable.Enumerable[TSource]) (enumerable.Enumerable[TResult], error) {
+func LoadFromFile[TSource any, TResult any](path string, src enumerable.Enumerable[TSource]) (enumerable.Enumerable[TResult], error) {
 	// We only support json lens files at the moment, so we just trust that it is json.
 	// In the future we'll need to determine which format the file is in.
 	lensConfig, err := json.Load(path)
