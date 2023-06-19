@@ -24,7 +24,7 @@ func main() {
 	}
 
 	src := enumerable.New(data)
-	result, err := config.Load[map[string]any, map[string]any](lensFilePath, src)
+	result, err := config.LoadFromFile[map[string]any, map[string]any](lensFilePath, src)
 	if err != nil {
 		panic(err)
 	}
