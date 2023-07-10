@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/lens-vm/lens/host-go/engine"
+	"github.com/lens-vm/lens/host-go/runtimes/wasmer"
 	"github.com/lens-vm/lens/tests/modules"
 	"github.com/sourcenetwork/immutable/enumerable"
 
@@ -16,8 +17,15 @@ import (
 )
 
 func TestWasm32PipelineWithAddtionalParams(t *testing.T) {
-	module, err := engine.LoadModule(
-		modules.WasmPath4,
+	runtime := wasmer.New()
+
+	module, err := engine.NewModule(runtime, modules.WasmPath4)
+	if err != nil {
+		t.Error(err)
+	}
+
+	instance, err := engine.NewInstance(
+		module,
 		map[string]any{
 			"src": "Name",
 			"dst": "FullName",
@@ -33,7 +41,7 @@ func TestWasm32PipelineWithAddtionalParams(t *testing.T) {
 	}
 	source := enumerable.New([]type1{input})
 
-	pipe := engine.Append[type1, type2](source, module)
+	pipe := engine.Append[type1, type2](source, instance)
 
 	hasNext, err := pipe.Next()
 	if err != nil {
@@ -56,8 +64,15 @@ func TestWasm32PipelineWithAddtionalParams(t *testing.T) {
 }
 
 func TestWasm32PipelineMultipleModulesAndWithAddtionalParams(t *testing.T) {
-	module1, err := engine.LoadModule(
-		modules.WasmPath4,
+	runtime := wasmer.New()
+
+	module, err := engine.NewModule(runtime, modules.WasmPath4)
+	if err != nil {
+		t.Error(err)
+	}
+
+	instance1, err := engine.NewInstance(
+		module,
 		map[string]any{
 			"src": "Name",
 			"dst": "FirstName",
@@ -67,8 +82,8 @@ func TestWasm32PipelineMultipleModulesAndWithAddtionalParams(t *testing.T) {
 		t.Error(err)
 	}
 
-	module2, err := engine.LoadModule(
-		modules.WasmPath4,
+	instance2, err := engine.NewInstance(
+		module,
 		map[string]any{
 			"src": "FirstName",
 			"dst": "FullName",
@@ -86,8 +101,8 @@ func TestWasm32PipelineMultipleModulesAndWithAddtionalParams(t *testing.T) {
 
 	pipe := engine.Append[type1, type2](
 		source,
-		module1,
-		module2,
+		instance1,
+		instance2,
 	)
 
 	hasNext, err := pipe.Next()
@@ -111,8 +126,15 @@ func TestWasm32PipelineMultipleModulesAndWithAddtionalParams(t *testing.T) {
 }
 
 func TestWasm32PipelineWithAddtionalParamsErrors(t *testing.T) {
-	module, err := engine.LoadModule(
-		modules.WasmPath4,
+	runtime := wasmer.New()
+
+	module, err := engine.NewModule(runtime, modules.WasmPath4)
+	if err != nil {
+		t.Error(err)
+	}
+
+	instance, err := engine.NewInstance(
+		module,
 		map[string]any{
 			"src": "NotAField",
 			"dst": "FullName",
@@ -128,7 +150,7 @@ func TestWasm32PipelineWithAddtionalParamsErrors(t *testing.T) {
 	}
 	source := enumerable.New([]type1{input})
 
-	pipe := engine.Append[type1, type2](source, module)
+	pipe := engine.Append[type1, type2](source, instance)
 
 	hasNext, err := pipe.Next()
 	if err != nil {
@@ -141,8 +163,15 @@ func TestWasm32PipelineWithAddtionalParamsErrors(t *testing.T) {
 }
 
 func TestWasm32PipelineWithAddtionalParamsErrorsAndNilItem(t *testing.T) {
-	module, err := engine.LoadModule(
-		modules.WasmPath4,
+	runtime := wasmer.New()
+
+	module, err := engine.NewModule(runtime, modules.WasmPath4)
+	if err != nil {
+		t.Error(err)
+	}
+
+	instance, err := engine.NewInstance(
+		module,
 		map[string]any{
 			"src": "FirstName",
 			"dst": "FullName",
@@ -154,7 +183,7 @@ func TestWasm32PipelineWithAddtionalParamsErrorsAndNilItem(t *testing.T) {
 
 	source := enumerable.New([]*type1{nil})
 
-	pipe := engine.Append[*type1, *type2](source, module)
+	pipe := engine.Append[*type1, *type2](source, instance)
 
 	hasNext, err := pipe.Next()
 	if err != nil {

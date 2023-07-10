@@ -9,6 +9,7 @@ import (
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/lens-vm/lens/host-go/engine"
 	"github.com/lens-vm/lens/host-go/engine/module"
+	"github.com/lens-vm/lens/host-go/runtimes/wasmer"
 	"github.com/sourcenetwork/immutable/enumerable"
 )
 
@@ -30,19 +31,26 @@ func LoadFromFile[TSource any, TResult any](path string, src enumerable.Enumerab
 //
 // It does not enumerate the src.
 func Load[TSource any, TResult any](lensConfig model.Lens, src enumerable.Enumerable[TSource]) (enumerable.Enumerable[TResult], error) {
+	runtime := wasmer.New()
+
 	modules := []module.Module{}
 	for _, lensModule := range lensConfig.Lenses {
-		var module module.Module
-		var err error
-		if lensModule.Inverse {
-			module, err = engine.LoadInverse(lensModule.Path, lensModule.Arguments)
-		} else {
-			module, err = engine.LoadModule(lensModule.Path, lensModule.Arguments)
-		}
+		var instance module.Module
+		module, err := engine.NewModule(runtime, lensModule.Path)
 		if err != nil {
 			return nil, err
 		}
-		modules = append(modules, module)
+
+		if lensModule.Inverse {
+			instance, err = engine.NewInverse(module, lensModule.Arguments)
+		} else {
+			instance, err = engine.NewInstance(module, lensModule.Arguments)
+		}
+
+		if err != nil {
+			return nil, err
+		}
+		modules = append(modules, instance)
 	}
 
 	return engine.Append[TSource, TResult](src, modules...), nil
