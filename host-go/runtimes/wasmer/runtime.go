@@ -9,7 +9,6 @@ import (
 
 	"github.com/lens-vm/lens/host-go/engine/module"
 	"github.com/lens-vm/lens/host-go/engine/pipes"
-	"github.com/lens-vm/lens/host-go/engine/runtime"
 
 	"github.com/wasmerio/wasmer-go/wasmer"
 )
@@ -18,9 +17,9 @@ type wRuntime struct {
 	store *wasmer.Store
 }
 
-var _ runtime.Runtime = (*wRuntime)(nil)
+var _ module.Runtime = (*wRuntime)(nil)
 
-func New() runtime.Runtime {
+func New() module.Runtime {
 	engine := wasmer.NewEngine()
 	store := wasmer.NewStore(engine)
 	return &wRuntime{
@@ -32,9 +31,9 @@ type wModule struct {
 	module *wasmer.Module
 }
 
-var _ runtime.Module = (*wModule)(nil)
+var _ module.Module = (*wModule)(nil)
 
-func (rt *wRuntime) NewModule(wasmBytes []byte) (runtime.Module, error) {
+func (rt *wRuntime) NewModule(wasmBytes []byte) (module.Module, error) {
 	module, err := wasmer.NewModule(rt.store, wasmBytes)
 	if err != nil {
 		return nil, err

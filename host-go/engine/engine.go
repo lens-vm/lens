@@ -9,7 +9,6 @@ import (
 
 	"github.com/lens-vm/lens/host-go/engine/module"
 	"github.com/lens-vm/lens/host-go/engine/pipes"
-	"github.com/lens-vm/lens/host-go/engine/runtime"
 	"github.com/sourcenetwork/immutable/enumerable"
 )
 
@@ -44,7 +43,7 @@ func append[TSource any, TResult any](src enumerable.Enumerable[TSource], instan
 	}
 }
 
-func NewModule(runtime runtime.Runtime, path string) (runtime.Module, error) {
+func NewModule(runtime module.Runtime, path string) (module.Module, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -53,10 +52,10 @@ func NewModule(runtime runtime.Runtime, path string) (runtime.Module, error) {
 	return runtime.NewModule(content)
 }
 
-func NewInstance(module runtime.Module, paramSets ...map[string]any) (module.Instance, error) {
+func NewInstance(module module.Module, paramSets ...map[string]any) (module.Instance, error) {
 	return module.NewInstance("transform", paramSets...)
 }
 
-func NewInverse(module runtime.Module, paramSets ...map[string]any) (module.Instance, error) {
+func NewInverse(module module.Module, paramSets ...map[string]any) (module.Instance, error) {
 	return module.NewInstance("inverse", paramSets...)
 }
