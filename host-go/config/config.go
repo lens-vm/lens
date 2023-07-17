@@ -33,18 +33,31 @@ func LoadFromFile[TSource any, TResult any](path string, src enumerable.Enumerab
 func Load[TSource any, TResult any](lensConfig model.Lens, src enumerable.Enumerable[TSource]) (enumerable.Enumerable[TResult], error) {
 	runtime := wasmer.New()
 
-	instances := []module.Instance{}
-	for _, lensModule := range lensConfig.Lenses {
-		var instance module.Instance
-		module, err := engine.NewModule(runtime, lensModule.Path)
+	modulesByPath := map[string]module.Module{}
+	for _, moduleCfg := range lensConfig.Lenses {
+		if _, ok := modulesByPath[moduleCfg.Path]; ok {
+			continue
+		}
+
+		// Modules are fairly expensive objects, and they can be reused, so we de-duplicate
+		// the WAT code paths here and make sure we only create unique module objects.
+		lensModule, err := engine.NewModule(runtime, moduleCfg.Path)
 		if err != nil {
 			return nil, err
 		}
+		modulesByPath[moduleCfg.Path] = lensModule
+	}
 
-		if lensModule.Inverse {
-			instance, err = engine.NewInverse(module, lensModule.Arguments)
+	instances := []module.Instance{}
+	for _, moduleCfg := range lensConfig.Lenses {
+		lensModule := modulesByPath[moduleCfg.Path]
+
+		var instance module.Instance
+		var err error
+		if moduleCfg.Inverse {
+			instance, err = engine.NewInverse(lensModule, moduleCfg.Arguments)
 		} else {
-			instance, err = engine.NewInstance(module, lensModule.Arguments)
+			instance, err = engine.NewInstance(lensModule, moduleCfg.Arguments)
 		}
 
 		if err != nil {
