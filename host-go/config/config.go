@@ -32,8 +32,41 @@ func LoadFromFile[TSource any, TResult any](path string, src enumerable.Enumerab
 // It does not enumerate the src.
 func Load[TSource any, TResult any](lensConfig model.Lens, src enumerable.Enumerable[TSource]) (enumerable.Enumerable[TResult], error) {
 	runtime := wasmer.New()
-
 	modulesByPath := map[string]module.Module{}
+
+	return LoadInto[TSource, TResult](runtime, modulesByPath, lensConfig, src)
+}
+
+// LoadIntoFromFile loads a lens file at the given path and applies it to the provided src
+// extending the provided runtime and module cache.
+//
+// It does not enumerate the src. Any new modules will be added to the given module map.
+func LoadIntoFromFile[TSource any, TResult any](
+	runtime module.Runtime,
+	modulesByPath map[string]module.Module,
+	path string,
+	src enumerable.Enumerable[TSource],
+) (enumerable.Enumerable[TResult], error) {
+	// We only support json lens files at the moment, so we just trust that it is json.
+	// In the future we'll need to determine which format the file is in.
+	lensConfig, err := json.Load(path)
+	if err != nil {
+		return nil, err
+	}
+
+	return LoadInto[TSource, TResult](runtime, modulesByPath, lensConfig, src)
+}
+
+// LoadInto constructs a lens from the given config and applies it to the provided src
+// extending the provided runtime and module cache.
+//
+// It does not enumerate the src. Any new modules will be added to the given module map.
+func LoadInto[TSource any, TResult any](
+	runtime module.Runtime,
+	modulesByPath map[string]module.Module,
+	lensConfig model.Lens,
+	src enumerable.Enumerable[TSource],
+) (enumerable.Enumerable[TResult], error) {
 	for _, moduleCfg := range lensConfig.Lenses {
 		if _, ok := modulesByPath[moduleCfg.Path]; ok {
 			continue
