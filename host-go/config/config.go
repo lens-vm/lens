@@ -33,9 +33,9 @@ func LoadFromFile[TSource any, TResult any](path string, src enumerable.Enumerab
 func Load[TSource any, TResult any](lensConfig model.Lens, src enumerable.Enumerable[TSource]) (enumerable.Enumerable[TResult], error) {
 	runtime := wasmer.New()
 
-	modules := []module.Module{}
+	instances := []module.Instance{}
 	for _, lensModule := range lensConfig.Lenses {
-		var instance module.Module
+		var instance module.Instance
 		module, err := engine.NewModule(runtime, lensModule.Path)
 		if err != nil {
 			return nil, err
@@ -50,8 +50,8 @@ func Load[TSource any, TResult any](lensConfig model.Lens, src enumerable.Enumer
 		if err != nil {
 			return nil, err
 		}
-		modules = append(modules, instance)
+		instances = append(instances, instance)
 	}
 
-	return engine.Append[TSource, TResult](src, modules...), nil
+	return engine.Append[TSource, TResult](src, instances...), nil
 }

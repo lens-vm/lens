@@ -12,19 +12,19 @@ import (
 )
 
 type fromSource[TSource any, TResult any] struct {
-	source enumerable.Enumerable[TSource]
-	module module.Module
+	source   enumerable.Enumerable[TSource]
+	instance module.Instance
 
 	currentIndex module.MemSize
 }
 
 func NewFromSource[TSource any, TResult any](
 	source enumerable.Enumerable[TSource],
-	module module.Module,
+	instance module.Instance,
 ) Pipe[TResult] {
 	return &fromSource[TSource, TResult]{
-		source: source,
-		module: module,
+		source:   source,
+		instance: instance,
 	}
 }
 
@@ -54,7 +54,7 @@ func (s *fromSource[TSource, TResult]) Next() (bool, error) {
 func (s *fromSource[TSource, TResult]) Value() (TResult, error) {
 	var t TResult
 
-	item, err := GetItem(s.module.GetData(), s.currentIndex)
+	item, err := GetItem(s.instance.GetData(), s.currentIndex)
 	if err != nil || item == nil {
 		return t, err
 	}
@@ -70,7 +70,7 @@ func (s *fromSource[TSource, TResult]) Value() (TResult, error) {
 }
 
 func (s *fromSource[TSource, TResult]) Bytes() ([]byte, error) {
-	return GetItem(s.module.GetData(), s.currentIndex)
+	return GetItem(s.instance.GetData(), s.currentIndex)
 }
 
 func (s *fromSource[TSource, TResult]) Reset() {
@@ -83,17 +83,17 @@ func (s *fromSource[TSource, TResult]) transport(sourceItem TSource) (module.Mem
 		return 0, err
 	}
 
-	index, err := s.module.Alloc(module.TypeIdSize + module.MemSize(len(sourceBytes)) + module.LenSize)
+	index, err := s.instance.Alloc(module.TypeIdSize + module.MemSize(len(sourceBytes)) + module.LenSize)
 	if err != nil {
 		return 0, err
 	}
 
-	err = WriteItem(module.JSONTypeID, sourceBytes, s.module.GetData()[index:])
+	err = WriteItem(module.JSONTypeID, sourceBytes, s.instance.GetData()[index:])
 	if err != nil {
 		return 0, err
 	}
 
-	index, err = s.module.Transform(index)
+	index, err = s.instance.Transform(index)
 	if err != nil {
 		return 0, err
 	}

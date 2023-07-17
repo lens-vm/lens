@@ -18,5 +18,5 @@ type Runtime interface {
 type Module interface {
 	// NewInstance returns a new lens instance from this module, hosted
 	// within the parent runtime.
-	NewInstance(string, ...map[string]any) (module.Module, error)
+	NewInstance(string, ...map[string]any) (module.Instance, error)
 }

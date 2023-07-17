@@ -44,7 +44,7 @@ func TestAppendLensWithoutWasm(t *testing.T) {
 	memory := make([]byte, math.MaxUint16)
 	results := engine.Append[type1, type2](
 		source,
-		module.Module{
+		module.Instance{
 			Alloc: func(size module.MemSize) (module.MemSize, error) {
 				var arbitraryIndex module.MemSize = 5
 				return arbitraryIndex, nil

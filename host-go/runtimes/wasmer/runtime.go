@@ -45,26 +45,26 @@ func (rt *wRuntime) NewModule(wasmBytes []byte) (runtime.Module, error) {
 	}, nil
 }
 
-func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) (module.Module, error) {
+func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) (module.Instance, error) {
 	importObject := wasmer.NewImportObject()
 	instance, err := wasmer.NewInstance(m.module, importObject)
 	if err != nil {
-		return module.Module{}, err
+		return module.Instance{}, err
 	}
 
 	memory, err := instance.Exports.GetMemory("memory")
 	if err != nil {
-		return module.Module{}, err
+		return module.Instance{}, err
 	}
 
 	alloc, err := instance.Exports.GetRawFunction("alloc")
 	if err != nil {
-		return module.Module{}, err
+		return module.Instance{}, err
 	}
 
 	transform, err := instance.Exports.GetRawFunction(functionName)
 	if err != nil {
-		return module.Module{}, err
+		return module.Instance{}, err
 	}
 
 	params := map[string]any{}
@@ -79,38 +79,38 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 	if len(params) > 0 {
 		setParam, err := instance.Exports.GetRawFunction("set_param")
 		if err != nil {
-			return module.Module{}, err
+			return module.Instance{}, err
 		}
 
 		sourceBytes, err := json.Marshal(params)
 		if err != nil {
-			return module.Module{}, err
+			return module.Instance{}, err
 		}
 
 		index, err := alloc.Call(module.TypeIdSize + module.MemSize(len(sourceBytes)) + module.LenSize)
 		if err != nil {
-			return module.Module{}, err
+			return module.Instance{}, err
 		}
 
 		err = pipes.WriteItem(module.JSONTypeID, sourceBytes, memory.Data()[index.(module.MemSize):])
 		if err != nil {
-			return module.Module{}, err
+			return module.Instance{}, err
 		}
 
 		r, err := setParam.Call(index)
 		if err != nil {
-			return module.Module{}, err
+			return module.Instance{}, err
 		}
 
 		// The `set_param` wasm function may error, in which case the error needs to be retrieved
 		// from memory using `pipes.GetItem`.
 		_, err = pipes.GetItem(memory.Data(), r.(module.MemSize))
 		if err != nil {
-			return module.Module{}, err
+			return module.Instance{}, err
 		}
 	}
 
-	return module.Module{
+	return module.Instance{
 		Alloc: func(u module.MemSize) (module.MemSize, error) {
 			r, err := alloc.Call(u)
 			if err != nil {

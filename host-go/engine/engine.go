@@ -13,34 +13,34 @@ import (
 	"github.com/sourcenetwork/immutable/enumerable"
 )
 
-// Append appends the given Module(s) to the given source Enumerable, returning the result.
+// Append appends the given Module Instances to the given source Enumerable, returning the result.
 //
-// It will try and find the optimal way to communicate between the source and the new module, returning an enumerable of a type
+// It will try and find the optimal way to communicate between the source and the new module instance, returning an enumerable of a type
 // that best fits the situation. The source can be any type that implements the Enumerable interface, it does not need to be a
-// lens module.
-func Append[TSource any, TResult any](src enumerable.Enumerable[TSource], modules ...module.Module) enumerable.Enumerable[TResult] {
-	if len(modules) == 0 {
+// lens module instance.
+func Append[TSource any, TResult any](src enumerable.Enumerable[TSource], instances ...module.Instance) enumerable.Enumerable[TResult] {
+	if len(instances) == 0 {
 		return src.(enumerable.Enumerable[TResult])
 	}
 
-	if len(modules) == 1 {
-		return append[TSource, TResult](src, modules[0])
+	if len(instances) == 1 {
+		return append[TSource, TResult](src, instances[0])
 	}
 
-	intermediarySource := append[TSource, map[string]any](src, modules[0])
-	for i := 1; i < len(modules)-1; i++ {
-		intermediarySource = append[map[string]any, map[string]any](intermediarySource, modules[i])
+	intermediarySource := append[TSource, map[string]any](src, instances[0])
+	for i := 1; i < len(instances)-1; i++ {
+		intermediarySource = append[map[string]any, map[string]any](intermediarySource, instances[i])
 	}
 
-	return append[map[string]any, TResult](intermediarySource, modules[len(modules)-1])
+	return append[map[string]any, TResult](intermediarySource, instances[len(instances)-1])
 }
 
-func append[TSource any, TResult any](src enumerable.Enumerable[TSource], module module.Module) enumerable.Enumerable[TResult] {
+func append[TSource any, TResult any](src enumerable.Enumerable[TSource], instance module.Instance) enumerable.Enumerable[TResult] {
 	switch typedSrc := src.(type) {
 	case pipes.Pipe[TSource]:
-		return pipes.NewFromPipe[TSource, TResult](typedSrc, module)
+		return pipes.NewFromPipe[TSource, TResult](typedSrc, instance)
 	default:
-		return pipes.NewFromSource[TSource, TResult](src, module)
+		return pipes.NewFromSource[TSource, TResult](src, instance)
 	}
 }
 
@@ -53,10 +53,10 @@ func NewModule(runtime runtime.Runtime, path string) (runtime.Module, error) {
 	return runtime.NewModule(content)
 }
 
-func NewInstance(module runtime.Module, paramSets ...map[string]any) (module.Module, error) {
+func NewInstance(module runtime.Module, paramSets ...map[string]any) (module.Instance, error) {
 	return module.NewInstance("transform", paramSets...)
 }
 
-func NewInverse(module runtime.Module, paramSets ...map[string]any) (module.Module, error) {
+func NewInverse(module runtime.Module, paramSets ...map[string]any) (module.Instance, error) {
 	return module.NewInstance("inverse", paramSets...)
 }

@@ -11,19 +11,19 @@ import (
 )
 
 type fromPipe[TSource any, TResult any] struct {
-	source Pipe[TSource]
-	module module.Module
+	source   Pipe[TSource]
+	instance module.Instance
 
 	currentIndex module.MemSize
 }
 
 func NewFromPipe[TSource any, TResult any](
 	source Pipe[TSource],
-	module module.Module,
+	instance module.Instance,
 ) Pipe[TResult] {
 	return &fromPipe[TSource, TResult]{
-		source: source,
-		module: module,
+		source:   source,
+		instance: instance,
 	}
 }
 
@@ -53,7 +53,7 @@ func (s *fromPipe[TSource, TResult]) Next() (bool, error) {
 func (s *fromPipe[TSource, TResult]) Value() (TResult, error) {
 	var t TResult
 
-	item, err := GetItem(s.module.GetData(), s.currentIndex)
+	item, err := GetItem(s.instance.GetData(), s.currentIndex)
 	if err != nil || item == nil {
 		return t, err
 	}
@@ -68,7 +68,7 @@ func (s *fromPipe[TSource, TResult]) Value() (TResult, error) {
 }
 
 func (s *fromPipe[TSource, TResult]) Bytes() ([]byte, error) {
-	return GetItem(s.module.GetData(), s.currentIndex)
+	return GetItem(s.instance.GetData(), s.currentIndex)
 }
 
 func (s *fromPipe[TSource, TResult]) Reset() {
@@ -76,14 +76,14 @@ func (s *fromPipe[TSource, TResult]) Reset() {
 }
 
 func (s *fromPipe[TSource, TResult]) transport(sourceItem []byte) (module.MemSize, error) {
-	index, err := s.module.Alloc(module.MemSize(len(sourceItem)))
+	index, err := s.instance.Alloc(module.MemSize(len(sourceItem)))
 	if err != nil {
 		return 0, err
 	}
 
-	copy(s.module.GetData()[index:], sourceItem)
+	copy(s.instance.GetData()[index:], sourceItem)
 
-	index, err = s.module.Transform(index)
+	index, err = s.instance.Transform(index)
 	if err != nil {
 		return 0, err
 	}
