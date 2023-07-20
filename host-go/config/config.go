@@ -68,12 +68,12 @@ func LoadInto[TSource any, TResult any](
 	src enumerable.Enumerable[TSource],
 ) (enumerable.Enumerable[TResult], error) {
 	for _, moduleCfg := range lensConfig.Lenses {
+		// Modules are fairly expensive objects, and they can be reused, so we de-duplicate
+		// the WAT code paths here and make sure we only create unique module objects.
 		if _, ok := modulesByPath[moduleCfg.Path]; ok {
 			continue
 		}
 
-		// Modules are fairly expensive objects, and they can be reused, so we de-duplicate
-		// the WAT code paths here and make sure we only create unique module objects.
 		lensModule, err := engine.NewModule(runtime, moduleCfg.Path)
 		if err != nil {
 			return nil, err
