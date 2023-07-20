@@ -6,7 +6,7 @@ package module
 
 // Module represents a lens module loaded into a runtime.
 //
-// It may be used to instantiate multiple lens instances.
+// Multiple instances can be generated from the same module.
 type Module interface {
 	// NewInstance returns a new lens instance from this module, hosted
 	// within the parent runtime.
