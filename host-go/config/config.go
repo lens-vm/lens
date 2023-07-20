@@ -9,6 +9,7 @@ import (
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/lens-vm/lens/host-go/engine"
 	"github.com/lens-vm/lens/host-go/engine/module"
+	"github.com/lens-vm/lens/host-go/runtimes/wasmer"
 	"github.com/sourcenetwork/immutable/enumerable"
 )
 
@@ -30,20 +31,73 @@ func LoadFromFile[TSource any, TResult any](path string, src enumerable.Enumerab
 //
 // It does not enumerate the src.
 func Load[TSource any, TResult any](lensConfig model.Lens, src enumerable.Enumerable[TSource]) (enumerable.Enumerable[TResult], error) {
-	modules := []module.Module{}
-	for _, lensModule := range lensConfig.Lenses {
-		var module module.Module
-		var err error
-		if lensModule.Inverse {
-			module, err = engine.LoadInverse(lensModule.Path, lensModule.Arguments)
-		} else {
-			module, err = engine.LoadModule(lensModule.Path, lensModule.Arguments)
+	runtime := wasmer.New()
+	modulesByPath := map[string]module.Module{}
+
+	return LoadInto[TSource, TResult](runtime, modulesByPath, lensConfig, src)
+}
+
+// LoadIntoFromFile loads a lens file at the given path and applies it to the provided src
+// extending the provided runtime and module cache.
+//
+// It does not enumerate the src. Any new modules will be added to the given module map.
+func LoadIntoFromFile[TSource any, TResult any](
+	runtime module.Runtime,
+	modulesByPath map[string]module.Module,
+	path string,
+	src enumerable.Enumerable[TSource],
+) (enumerable.Enumerable[TResult], error) {
+	// We only support json lens files at the moment, so we just trust that it is json.
+	// In the future we'll need to determine which format the file is in.
+	lensConfig, err := json.Load(path)
+	if err != nil {
+		return nil, err
+	}
+
+	return LoadInto[TSource, TResult](runtime, modulesByPath, lensConfig, src)
+}
+
+// LoadInto constructs a lens from the given config and applies it to the provided src
+// extending the provided runtime and module cache.
+//
+// It does not enumerate the src. Any new modules will be added to the given module map.
+func LoadInto[TSource any, TResult any](
+	runtime module.Runtime,
+	modulesByPath map[string]module.Module,
+	lensConfig model.Lens,
+	src enumerable.Enumerable[TSource],
+) (enumerable.Enumerable[TResult], error) {
+	for _, moduleCfg := range lensConfig.Lenses {
+		// Modules are fairly expensive objects, and they can be reused, so we de-duplicate
+		// the WAT code paths here and make sure we only create unique module objects.
+		if _, ok := modulesByPath[moduleCfg.Path]; ok {
+			continue
 		}
+
+		lensModule, err := engine.NewModule(runtime, moduleCfg.Path)
 		if err != nil {
 			return nil, err
 		}
-		modules = append(modules, module)
+		modulesByPath[moduleCfg.Path] = lensModule
 	}
 
-	return engine.Append[TSource, TResult](src, modules...), nil
+	instances := []module.Instance{}
+	for _, moduleCfg := range lensConfig.Lenses {
+		lensModule := modulesByPath[moduleCfg.Path]
+
+		var instance module.Instance
+		var err error
+		if moduleCfg.Inverse {
+			instance, err = engine.NewInverse(lensModule, moduleCfg.Arguments)
+		} else {
+			instance, err = engine.NewInstance(lensModule, moduleCfg.Arguments)
+		}
+
+		if err != nil {
+			return nil, err
+		}
+		instances = append(instances, instance)
+	}
+
+	return engine.Append[TSource, TResult](src, instances...), nil
 }
