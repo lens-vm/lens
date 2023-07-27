@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/lens-vm/lens/host-go/engine"
-	"github.com/lens-vm/lens/host-go/runtimes/wasmer"
+	"github.com/lens-vm/lens/host-go/runtimes/wazero"
 	"github.com/lens-vm/lens/tests/modules"
 	"github.com/sourcenetwork/immutable/enumerable"
 
@@ -17,7 +17,7 @@ import (
 )
 
 func TestWasm32PipelineFromSourceAsFull(t *testing.T) {
-	runtime := wasmer.New()
+	runtime := wazero.New()
 
 	module, err := engine.NewModule(runtime, modules.WasmPath1)
 	if err != nil {
@@ -58,7 +58,7 @@ func TestWasm32PipelineFromSourceAsFull(t *testing.T) {
 }
 
 func TestWasm32PipelineFromSourceAsFullToModuleAsFull(t *testing.T) {
-	runtime := wasmer.New()
+	runtime := wazero.New()
 
 	module1, err := engine.NewModule(runtime, modules.WasmPath1)
 	if err != nil {
@@ -109,7 +109,7 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFull(t *testing.T) {
 }
 
 func TestWasm32PipelineFromSourceAsFullToModuleAsFullToModuleAsFull(t *testing.T) {
-	runtime := wasmer.New()
+	runtime := wazero.New()
 
 	module1, err := engine.NewModule(runtime, modules.WasmPath1)
 	if err != nil {
@@ -161,7 +161,7 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFullToModuleAsFull(t *testing.T
 }
 
 func TestWasm32PipelineFromSourceAsFullToModuleAsFullToASModuleAsFull(t *testing.T) {
-	runtime := wasmer.New()
+	runtime := wazero.New()
 
 	module1, err := engine.NewModule(runtime, modules.WasmPath1)
 	if err != nil {
@@ -220,7 +220,7 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFullToASModuleAsFull(t *testing
 }
 
 func TestWasm32PipelineFromSourceAsFullToModuleAsFullToModuleAsFullWithSingleAppend(t *testing.T) {
-	runtime := wasmer.New()
+	runtime := wazero.New()
 
 	module1, err := engine.NewModule(runtime, modules.WasmPath1)
 	if err != nil {
