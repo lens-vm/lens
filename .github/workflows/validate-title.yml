@@ -1,0 +1,37 @@
+# Copyright 2022 Democratized Data Foundation
+#
+# Use of this software is governed by the Business Source License
+# included in the file licenses/BSL.txt.
+#
+# As of the Change Date specified in that file, in accordance with
+# the Business Source License, use of this software will be governed
+# by the Apache License, Version 2.0, included in the file
+# licenses/APL.txt.
+
+name: Validate Title Workflow
+
+on:
+  pull_request:
+    types:
+      - edited
+      - opened
+      - reopened
+      - synchronize
+    branches:
+      - develop
+
+jobs:
+  validate-title:
+    name: Validate title job
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v3
+
+      - name: Ensure the scripts are not broken
+        run: make test:scripts
+
+      - name: Run the validation script on the title
+        run: ./tools/scripts/validate-conventional-style.sh "${{ github.event.pull_request.title }}"
