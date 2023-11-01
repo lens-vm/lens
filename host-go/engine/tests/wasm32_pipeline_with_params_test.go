@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/lens-vm/lens/host-go/engine"
-	"github.com/lens-vm/lens/host-go/runtimes/wazero"
 	"github.com/lens-vm/lens/tests/modules"
 	"github.com/sourcenetwork/immutable/enumerable"
 
@@ -17,7 +16,7 @@ import (
 )
 
 func TestWasm32PipelineWithAddtionalParams(t *testing.T) {
-	runtime := wazero.New()
+	runtime := newRuntime()
 
 	module, err := engine.NewModule(runtime, modules.WasmPath4)
 	if err != nil {
@@ -64,7 +63,7 @@ func TestWasm32PipelineWithAddtionalParams(t *testing.T) {
 }
 
 func TestWasm32PipelineMultipleModulesAndWithAddtionalParams(t *testing.T) {
-	runtime := wazero.New()
+	runtime := newRuntime()
 
 	module, err := engine.NewModule(runtime, modules.WasmPath4)
 	if err != nil {
@@ -126,7 +125,7 @@ func TestWasm32PipelineMultipleModulesAndWithAddtionalParams(t *testing.T) {
 }
 
 func TestWasm32PipelineWithAddtionalParamsErrors(t *testing.T) {
-	runtime := wazero.New()
+	runtime := newRuntime()
 
 	module, err := engine.NewModule(runtime, modules.WasmPath4)
 	if err != nil {
@@ -163,7 +162,7 @@ func TestWasm32PipelineWithAddtionalParamsErrors(t *testing.T) {
 }
 
 func TestWasm32PipelineWithAddtionalParamsErrorsAndNilItem(t *testing.T) {
-	runtime := wazero.New()
+	runtime := newRuntime()
 
 	module, err := engine.NewModule(runtime, modules.WasmPath4)
 	if err != nil {
