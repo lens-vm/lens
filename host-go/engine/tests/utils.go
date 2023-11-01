@@ -4,6 +4,11 @@
 
 package tests
 
+import (
+	"github.com/lens-vm/lens/host-go/engine/module"
+	"github.com/lens-vm/lens/host-go/runtimes/wazero"
+)
+
 type type1 struct {
 	Name string
 	Age  int
@@ -12,4 +17,8 @@ type type1 struct {
 type type2 struct {
 	FullName string
 	Age      int
+}
+
+func newRuntime() module.Runtime {
+	return wazero.New()
 }
