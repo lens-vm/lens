@@ -61,7 +61,7 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 	}
 
 	memory := mem.Memory()
-	if mem == nil {
+	if memory == nil {
 		return module.Instance{}, errors.New(fmt.Sprintf("Export `%s` does not exist", "memory"))
 	}
 
