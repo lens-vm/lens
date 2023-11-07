@@ -49,13 +49,13 @@ pub fn nil_ptr() -> *mut u8 {
 /// Allocate the given `size` number of bytes in memory and returns a pointer to
 /// the first byte.
 ///
-/// The runtime will be instructed to forget this memory, but not dispose of it - the value
+/// The runtime will be instructed to manually drop this memory and not dispose of it now - the value
 /// that is to be held at this location should be written before any other calls are made into
 /// the wasm instance.
 pub fn alloc(size: usize) -> *mut u8 {
-    let mut buf = Vec::with_capacity(size);
+    let buf = Vec::with_capacity(size);
+    let mut buf = ManuallyDrop::new(buf);
     let ptr = buf.as_mut_ptr();
-    mem::forget(buf);
     return ptr;
 }
 
@@ -109,14 +109,20 @@ pub fn try_from_mem<TOutput: for<'a> Deserialize<'a>>(ptr: *mut u8) -> Result<Op
 
     let json_string = String::from_utf8(input_vec.to_vec())?.clone();
 
-    mem::drop(input_vec);
-    mem::drop(len_rdr);
-    mem::drop(type_rdr);
-
     // It is possible for null json values to reach this line, particularly if sourced directly
     // from a 3rd party module, so we ensure that we parse to option as well as the earlier type_id
     // checks.
     let result = serde_json::from_str::<Option<TOutput>>(&json_string)?;
+
+    // Now that we have finished working in this func, we can construct the full input buffer
+    // and then manually drop it.
+    let buf_len = mem::size_of::<i8>() + mem::size_of::<u32>() + len;
+    let buf: Vec<u8> = unsafe {
+        Vec::from_raw_parts(ptr, buf_len, buf_len)
+    };
+    let buf = ManuallyDrop::new(buf);
+    mem::drop(ManuallyDrop::into_inner(buf));
+
     Ok(result)
 }
 
