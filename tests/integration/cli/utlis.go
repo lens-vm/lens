@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -33,16 +34,13 @@ type TestCase[TSource any, TResult any] struct {
 
 var hostExecutablePaths = []string{
 	getPathRelativeToProjectRoot(
-		"/host-go/build/host-go",
+		"/host-go/build/host-go.exe",
 	),
 }
 
 func getPathRelativeToProjectRoot(relativePath string) string {
-	filename, err := os.Getwd()
-	if err != nil {
-		panic("failed to get working directory")
-	}
-	root := path.Dir(path.Dir(path.Dir(filename)))
+	_, filename, _, _ := runtime.Caller(0)
+	root := path.Dir(path.Dir(path.Dir(path.Dir(filename))))
 	return path.Join(root, relativePath)
 }
 

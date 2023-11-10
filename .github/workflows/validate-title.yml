@@ -1,12 +1,6 @@
-# Copyright 2022 Democratized Data Foundation
-#
-# Use of this software is governed by the Business Source License
-# included in the file licenses/BSL.txt.
-#
-# As of the Change Date specified in that file, in accordance with
-# the Business Source License, use of this software will be governed
-# by the Apache License, Version 2.0, included in the file
-# licenses/APL.txt.
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 name: Validate Title Workflow
 
@@ -18,7 +12,7 @@ on:
       - reopened
       - synchronize
     branches:
-      - develop
+      - main
 
 jobs:
   validate-title:
