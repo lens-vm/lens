@@ -4,7 +4,7 @@ deps\:test:
 
 .PHONY: build
 build:
-	(cd cli && go build -o ../build/host-go)
+	(cd cli && go build -o ../build/host-go.exe)
 
 .PHONY: clean
 clean:
