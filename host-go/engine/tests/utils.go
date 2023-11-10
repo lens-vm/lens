@@ -20,5 +20,6 @@ type type2 struct {
 }
 
 func newRuntime() module.Runtime {
+	println("fdfgs")
 	return wasmtime.New()
 }
