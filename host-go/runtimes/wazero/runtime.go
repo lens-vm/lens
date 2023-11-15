@@ -13,6 +13,7 @@ import (
 	"github.com/lens-vm/lens/host-go/engine/module"
 	"github.com/lens-vm/lens/host-go/engine/pipes"
 	"github.com/tetratelabs/wazero"
+	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
 
 type wRuntime struct {
@@ -35,8 +36,12 @@ type wModule struct {
 
 var _ module.Module = (*wModule)(nil)
 
-func (rt *wRuntime) NewModule(wasmBytes []byte) (module.Module, error) {
+func (rt *wRuntime) NewModule(wasmBytes []byte, wasi bool) (module.Module, error) {
 	ctx := context.TODO()
+	if wasi {
+		wasi_snapshot_preview1.MustInstantiate(ctx, rt.runtime)
+	}
+
 	compiledWasm, err := rt.runtime.CompileModule(ctx, wasmBytes)
 	if err != nil {
 		return nil, err

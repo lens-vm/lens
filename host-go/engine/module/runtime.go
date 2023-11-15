@@ -9,5 +9,5 @@ type Runtime interface {
 	// NewModule instantiates a new module from the given WAT code.
 	//
 	// This is a fairly expensive operation.
-	NewModule([]byte) (Module, error)
+	NewModule([]byte, bool) (Module, error)
 }

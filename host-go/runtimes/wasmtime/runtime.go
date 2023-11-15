@@ -25,6 +25,9 @@ func New() module.Runtime {
 	engine := wasmtime.NewEngine()
 	store := wasmtime.NewStore(engine)
 
+	wasiConfig := wasmtime.NewWasiConfig()
+	store.SetWasi(wasiConfig)
+
 	return &wRuntime{
 		store: store,
 	}
@@ -33,11 +36,12 @@ func New() module.Runtime {
 type wModule struct {
 	rt     *wRuntime
 	module *wasmtime.Module
+	wasi   bool
 }
 
 var _ module.Module = (*wModule)(nil)
 
-func (rt *wRuntime) NewModule(wasmBytes []byte) (module.Module, error) {
+func (rt *wRuntime) NewModule(wasmBytes []byte, wasi bool) (module.Module, error) {
 	module, err := wasmtime.NewModule(rt.store.Engine, wasmBytes)
 	if err != nil {
 		return nil, err
@@ -46,13 +50,32 @@ func (rt *wRuntime) NewModule(wasmBytes []byte) (module.Module, error) {
 	return &wModule{
 		rt:     rt,
 		module: module,
+		wasi:   wasi,
 	}, nil
 }
 
 func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) (module.Instance, error) {
-	instance, err := wasmtime.NewInstance(m.rt.store, m.module, []wasmtime.AsExtern{})
-	if err != nil {
-		return module.Instance{}, err
+	var instance *wasmtime.Instance
+	var err error
+
+	switch {
+	case m.wasi:
+		// wasi imports
+		linker := wasmtime.NewLinker(m.rt.store.Engine)
+		if err := linker.DefineWasi(); err != nil {
+			return module.Instance{}, err
+		}
+
+		instance, err = linker.Instantiate(m.rt.store, m.module)
+		if err != nil {
+			return module.Instance{}, err
+		}
+	default:
+		// default imports
+		instance, err = wasmtime.NewInstance(m.rt.store, m.module, []wasmtime.AsExtern{})
+		if err != nil {
+			return module.Instance{}, err
+		}
 	}
 
 	mem := instance.GetExport(m.rt.store, "memory")
