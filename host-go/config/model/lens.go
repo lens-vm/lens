@@ -27,4 +27,7 @@ type LensModule struct {
 	//
 	// The lens module must expose a `set_param` function if values are provided here.
 	Arguments map[string]any
+
+	// If true WASI imports will be enabled for this module.
+	EnableWASI bool
 }

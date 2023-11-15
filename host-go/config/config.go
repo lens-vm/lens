@@ -74,7 +74,7 @@ func LoadInto[TSource any, TResult any](
 			continue
 		}
 
-		lensModule, err := engine.NewModule(runtime, moduleCfg.Path)
+		lensModule, err := engine.NewModule(runtime, moduleCfg.Path, moduleCfg.EnableWASI)
 		if err != nil {
 			return nil, err
 		}

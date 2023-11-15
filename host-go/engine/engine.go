@@ -46,13 +46,13 @@ func append[TSource any, TResult any](src enumerable.Enumerable[TSource], instan
 // NewModule instantiates a new module from the WAT code at the given path.
 //
 // This is a fairly expensive operation.
-func NewModule(runtime module.Runtime, path string) (module.Module, error) {
+func NewModule(runtime module.Runtime, path string, enableWASI bool) (module.Module, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	return runtime.NewModule(content)
+	return runtime.NewModule(content, enableWASI)
 }
 
 func NewInstance(module module.Module, paramSets ...map[string]any) (module.Instance, error) {
