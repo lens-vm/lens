@@ -5,10 +5,6 @@
 package tests
 
 import (
-	"bytes"
-	"encoding/binary"
-	"encoding/json"
-	"math"
 	"testing"
 
 	"github.com/lens-vm/lens/host-go/engine"
@@ -41,7 +37,7 @@ func TestAppendLensWithoutWasm(t *testing.T) {
 	}
 	source := enumerable.New(sourceSlice)
 
-	memory := make([]byte, math.MaxUint16)
+	testModule := newNativeModule()
 	results := engine.Append[type1, type2](
 		source,
 		module.Instance{
@@ -50,65 +46,10 @@ func TestAppendLensWithoutWasm(t *testing.T) {
 				return arbitraryIndex, nil
 			},
 			Transform: func(startIndex module.MemSize) (module.MemSize, error) {
-				typeBuffer := make([]byte, module.TypeIdSize)
-				copy(typeBuffer, memory[startIndex:startIndex+module.TypeIdSize])
-				var inputTypeId module.TypeIdType
-				buf := bytes.NewReader(typeBuffer)
-				err := binary.Read(buf, module.TypeIdByteOrder, &inputTypeId)
-				if err != nil {
-					return 0, err
-				}
-
-				lenBuffer := make([]byte, module.LenSize)
-				copy(lenBuffer, memory[startIndex+module.TypeIdSize:startIndex+module.TypeIdSize+module.LenSize])
-				var inputLen module.LenType
-				buf = bytes.NewReader(lenBuffer)
-				err = binary.Read(buf, module.LenByteOrder, &inputLen)
-				if err != nil {
-					return 0, err
-				}
-
-				sourceJson := memory[startIndex+module.TypeIdSize+module.LenSize : startIndex+module.TypeIdSize+module.MemSize(inputLen)+module.LenSize]
-				sourceItem := &type1{}
-
-				err = json.Unmarshal([]byte(sourceJson), sourceItem)
-				if err != nil {
-					return 0, err
-				}
-
-				resultItem := type2{
-					FullName: sourceItem.Name,
-					Age:      sourceItem.Age,
-				}
-
-				returnBytes, err := json.Marshal(resultItem)
-				if err != nil {
-					return 0, err
-				}
-
-				typeWriter := bytes.NewBuffer([]byte{})
-				err = binary.Write(typeWriter, module.TypeIdByteOrder, int8(1))
-				if err != nil {
-					return 0, err
-				}
-
-				returnLen := module.LenType(len(returnBytes))
-				lenWriter := bytes.NewBuffer([]byte{})
-				err = binary.Write(lenWriter, module.LenByteOrder, returnLen)
-				if err != nil {
-					return 0, err
-				}
-
-				arbitraryReturnIndex := math.MaxUint16 / 2
-				dst := memory[arbitraryReturnIndex:]
-				copy(dst, typeWriter.Bytes())
-				copy(dst[module.TypeIdSize:], lenWriter.Bytes())
-				copy(dst[module.TypeIdSize+module.LenSize:], returnBytes)
-
-				return module.MemSize(arbitraryReturnIndex), nil
+				return testModule.nativeTransform(startIndex)
 			},
 			GetData: func() []byte {
-				return memory
+				return testModule.memory
 			},
 		},
 	)
