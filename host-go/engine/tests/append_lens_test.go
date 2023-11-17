@@ -45,6 +45,9 @@ func TestAppendLensWithoutWasm(t *testing.T) {
 				var arbitraryIndex module.MemSize = 5
 				return arbitraryIndex, nil
 			},
+			Free: func(ptr, size module.MemSize) error {
+				return nil
+			},
 			Transform: func(startIndex module.MemSize) (module.MemSize, error) {
 				return testModule.nativeTransform(startIndex)
 			},

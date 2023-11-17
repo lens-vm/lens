@@ -40,6 +40,11 @@ pub extern fn alloc(size: usize) -> *mut u8 {
 }
 
 #[no_mangle]
+pub extern fn free(ptr: *mut u8, size: usize) {
+    lens_sdk::free(ptr, size)
+}
+
+#[no_mangle]
 pub extern fn set_param(ptr: *mut u8) -> *mut u8 {
     match try_set_param(ptr) {
         Ok(_) => lens_sdk::nil_ptr(),

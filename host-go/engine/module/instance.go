@@ -10,6 +10,8 @@ type Instance struct {
 	// Alloc allocates the given number of bytes in memory and returns the start index to the allocated block.
 	Alloc func(size MemSize) (MemSize, error)
 
+	Free func(ptr MemSize, size MemSize) error
+
 	// Transform transforms the data stored at the given start index, returning the start index of the result.
 	Transform func(startIndex MemSize) (MemSize, error)
 

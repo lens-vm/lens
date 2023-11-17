@@ -76,17 +76,23 @@ func (s *fromPipe[TSource, TResult]) Reset() {
 }
 
 func (s *fromPipe[TSource, TResult]) transport(sourceItem []byte) (module.MemSize, error) {
-	index, err := s.instance.Alloc(module.MemSize(len(sourceItem)))
+	inputSize := module.MemSize(len(sourceItem))
+	inputIndex, err := s.instance.Alloc(inputSize)
 	if err != nil {
 		return 0, err
 	}
 
-	copy(s.instance.GetData()[index:], sourceItem)
+	copy(s.instance.GetData()[inputIndex:], sourceItem)
 
-	index, err = s.instance.Transform(index)
+	returnIndex, err := s.instance.Transform(inputIndex)
 	if err != nil {
 		return 0, err
 	}
 
-	return index, nil
+	err = s.instance.Free(inputIndex, inputSize)
+	if err != nil {
+		return 0, err
+	}
+
+	return returnIndex, nil
 }

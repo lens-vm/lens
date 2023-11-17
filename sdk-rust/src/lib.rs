@@ -59,6 +59,14 @@ pub fn alloc(size: usize) -> *mut u8 {
     return ptr;
 }
 
+pub fn free(ptr: *mut u8, size: usize) {
+    let buf: Vec<u8> = unsafe {
+        Vec::from_raw_parts(ptr, size, size)
+    };
+    let buf = ManuallyDrop::new(buf);
+    mem::drop(ManuallyDrop::into_inner(buf));
+}
+
 /// Read the data held at the given location in memory as the given `TOutput` type.
 ///
 /// The bytes at the given location are expected to be in the correct format for the first (`type_id`) byte.
@@ -113,15 +121,6 @@ pub fn try_from_mem<TOutput: for<'a> Deserialize<'a>>(ptr: *mut u8) -> Result<Op
     // from a 3rd party module, so we ensure that we parse to option as well as the earlier type_id
     // checks.
     let result = serde_json::from_str::<Option<TOutput>>(&json_string)?;
-
-    // Now that we have finished working in this func, we can construct the full input buffer
-    // and then manually drop it.
-    let buf_len = mem::size_of::<i8>() + mem::size_of::<u32>() + len;
-    let buf: Vec<u8> = unsafe {
-        Vec::from_raw_parts(ptr, buf_len, buf_len)
-    };
-    let buf = ManuallyDrop::new(buf);
-    mem::drop(ManuallyDrop::into_inner(buf));
 
     Ok(result)
 }

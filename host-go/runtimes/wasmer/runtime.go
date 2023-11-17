@@ -63,6 +63,11 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 		return module.Instance{}, err
 	}
 
+	free, err := instance.Exports.GetRawFunction("free")
+	if err != nil {
+		return module.Instance{}, err
+	}
+
 	transform, err := instance.Exports.GetRawFunction(functionName)
 	if err != nil {
 		return module.Instance{}, err
@@ -118,6 +123,10 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 				return 0, err
 			}
 			return r.(module.MemSize), err
+		},
+		Free: func(ptr, size module.MemSize) error {
+			_, err := free.Call(ptr, size)
+			return err
 		},
 		Transform: func(u module.MemSize) (module.MemSize, error) {
 			r, err := transform.Call(u)

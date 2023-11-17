@@ -83,20 +83,26 @@ func (s *fromSource[TSource, TResult]) transport(sourceItem TSource) (module.Mem
 		return 0, err
 	}
 
-	index, err := s.instance.Alloc(module.TypeIdSize + module.MemSize(len(sourceBytes)) + module.LenSize)
+	inputSize := module.TypeIdSize + module.MemSize(len(sourceBytes)) + module.LenSize
+	inputIndex, err := s.instance.Alloc(inputSize)
 	if err != nil {
 		return 0, err
 	}
 
-	err = WriteItem(module.JSONTypeID, sourceBytes, s.instance.GetData()[index:])
+	err = WriteItem(module.JSONTypeID, sourceBytes, s.instance.GetData()[inputIndex:])
 	if err != nil {
 		return 0, err
 	}
 
-	index, err = s.instance.Transform(index)
+	returnIndex, err := s.instance.Transform(inputIndex)
 	if err != nil {
 		return 0, err
 	}
 
-	return index, nil
+	err = s.instance.Free(inputIndex, inputSize)
+	if err != nil {
+		return 0, err
+	}
+
+	return returnIndex, nil
 }

@@ -62,6 +62,11 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 		return module.Instance{}, errors.New(fmt.Sprintf("Export `%s` does not exist", "alloc"))
 	}
 
+	free := instance.ExportedFunction("free")
+	if alloc == nil {
+		return module.Instance{}, errors.New(fmt.Sprintf("Export `%s` does not exist", "free"))
+	}
+
 	transform := instance.ExportedFunction(functionName)
 	if transform == nil {
 		return module.Instance{}, errors.New(fmt.Sprintf("Export `%s` does not exist", functionName))
@@ -119,6 +124,10 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 				return 0, err
 			}
 			return module.MemSize(r[0]), nil
+		},
+		Free: func(ptr, size module.MemSize) error {
+			_, err := free.Call(ctx, uint64(ptr), uint64(size))
+			return err
 		},
 		Transform: func(u module.MemSize) (module.MemSize, error) {
 			r, err := transform.Call(ctx, uint64(u))
