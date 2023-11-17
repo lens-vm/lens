@@ -16,7 +16,7 @@ func TestInverse(t *testing.T) {
 		Age      int
 	}
 
-	executeTest(
+	ExecuteTest(
 		t,
 		TestCase[Value, Value]{
 			LensFile: `
@@ -66,7 +66,7 @@ func TestInverseErrorsGivenNoInverseAvailable(t *testing.T) {
 		Age  int
 	}
 
-	executeTest(
+	ExecuteTest(
 		t,
 		TestCase[Value, Value]{
 			LensFile: `

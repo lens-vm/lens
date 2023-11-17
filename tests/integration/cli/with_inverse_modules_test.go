@@ -16,7 +16,7 @@ func TestInverseWithModules(t *testing.T) {
 		Age      int
 	}
 
-	executeTest(
+	ExecuteTest(
 		t,
 		TestCase[Value, Value]{
 			LensFile: `

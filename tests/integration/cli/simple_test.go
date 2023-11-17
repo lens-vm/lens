@@ -21,7 +21,7 @@ func TestSimple(t *testing.T) {
 		Age      int
 	}
 
-	executeTest(
+	ExecuteTest(
 		t,
 		TestCase[Input, Output]{
 			LensFile: `
@@ -70,7 +70,7 @@ func TestSimpleWithNoModules(t *testing.T) {
 		Age  int
 	}
 
-	executeTest(
+	ExecuteTest(
 		t,
 		TestCase[Input, Input]{
 			LensFile: `
@@ -120,7 +120,7 @@ func TestSimpleWithEmptyItem(t *testing.T) {
 		Age      int
 	}
 
-	executeTest(
+	ExecuteTest(
 		t,
 		TestCase[Input, Output]{
 			LensFile: `
@@ -168,7 +168,7 @@ func TestSimpleWithNilItem(t *testing.T) {
 		Age      int
 	}
 
-	executeTest(
+	ExecuteTest(
 		t,
 		TestCase[*Input, *Output]{
 			LensFile: `

@@ -21,7 +21,7 @@ func TestWithModulesWithParams(t *testing.T) {
 		Age        int
 	}
 
-	executeTest(
+	ExecuteTest(
 		t,
 		TestCase[Input, Output]{
 			LensFile: `

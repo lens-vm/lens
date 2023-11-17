@@ -21,7 +21,7 @@ func TestSimpleWithModules(t *testing.T) {
 		Age      int
 	}
 
-	executeTest(
+	ExecuteTest(
 		t,
 		TestCase[Input, Output]{
 			LensFile: `
@@ -74,7 +74,7 @@ func TestSimpleWithModulesRepeated(t *testing.T) {
 		Age      int
 	}
 
-	executeTest(
+	ExecuteTest(
 		t,
 		TestCase[Value, Value]{
 			LensFile: `

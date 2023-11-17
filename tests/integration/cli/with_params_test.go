@@ -21,7 +21,7 @@ func TestWithParams(t *testing.T) {
 		Age        int
 	}
 
-	executeTest(
+	ExecuteTest(
 		t,
 		TestCase[Input, Output]{
 			LensFile: `
@@ -79,7 +79,7 @@ func TestWithParamsReturnsErrorGivenBadParam(t *testing.T) {
 		Age        int
 	}
 
-	executeTest(
+	ExecuteTest(
 		t,
 		TestCase[Input, Output]{
 			LensFile: `
@@ -124,7 +124,7 @@ func TestWithParamsReturnsErrorGivenNilParam(t *testing.T) {
 		Age        int
 	}
 
-	executeTest(
+	ExecuteTest(
 		t,
 		TestCase[Input, Output]{
 			LensFile: `
