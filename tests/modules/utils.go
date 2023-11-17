@@ -31,6 +31,13 @@ var WasmPath4 string = getPathRelativeToProjectRoot(
 	"/tests/modules/rust_wasm32_rename/target/wasm32-unknown-unknown/debug/rust_wasm32_rename.wasm",
 )
 
+var AllModules = []string{
+	WasmPath1,
+	WasmPath2,
+	WasmPath3,
+	WasmPath4,
+}
+
 func getPathRelativeToProjectRoot(relativePath string) string {
 	_, filename, _, _ := runtime.Caller(0)
 	root := path.Dir(path.Dir(path.Dir(filename)))
