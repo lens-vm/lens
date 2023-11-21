@@ -20,10 +20,7 @@ function abort(
 const JSON_TYPE_ID: i8 = 1;
 
 export function alloc(size: usize): usize {
-    let buf = new ArrayBuffer(i32(size));
-    let ptr = changetype<usize>(buf);
-    store<ArrayBuffer>(ptr, buf);
-    return ptr;
+    return heap.alloc(size);
 }
 
 export function transform(ptr: usize): usize {
