@@ -16,7 +16,7 @@ type Instance struct {
 	Transform func(next func() MemSize) (MemSize, error)
 
 	// GetData returns the current state of the linear memory that this module uses.
-
+	//
 	// Values written to the return slice will be made available to this module, however changes made by the
 	// module after this function has been called are not guaranteed to be visible to the previously returned slice.
 	GetData func() []byte
