@@ -29,24 +29,24 @@ func NewFromPipe[TSource any, TResult any](
 
 var _ Pipe[int] = (*fromPipe[bool, int])(nil)
 
-func (s *fromPipe[TSource, TResult]) Next() (bool, error) {
-	index, err := s.instance.Transform(s.mustGetNext)
+func (p *fromPipe[TSource, TResult]) Next() (bool, error) {
+	index, err := p.instance.Transform(p.mustGetNext)
 	if err != nil {
 		return false, err
 	}
 
-	if module.TypeIdType(s.instance.GetData()[index]).IsEOS() {
+	if module.TypeIdType(p.instance.GetData()[index]).IsEOS() {
 		return false, nil
 	}
 
-	s.currentIndex = index
+	p.currentIndex = index
 	return true, nil
 }
 
-func (s *fromPipe[TSource, TResult]) Value() (TResult, error) {
+func (p *fromPipe[TSource, TResult]) Value() (TResult, error) {
 	var t TResult
 
-	item, err := GetItem(s.instance.GetData(), s.currentIndex)
+	item, err := GetItem(p.instance.GetData(), p.currentIndex)
 	if err != nil || item == nil {
 		return t, err
 	}
@@ -60,12 +60,12 @@ func (s *fromPipe[TSource, TResult]) Value() (TResult, error) {
 	return *result, nil
 }
 
-func (s *fromPipe[TSource, TResult]) Bytes() ([]byte, error) {
-	return GetItem(s.instance.GetData(), s.currentIndex)
+func (p *fromPipe[TSource, TResult]) Bytes() ([]byte, error) {
+	return GetItem(p.instance.GetData(), p.currentIndex)
 }
 
-func (s *fromPipe[TSource, TResult]) Reset() {
-	s.source.Reset()
+func (p *fromPipe[TSource, TResult]) Reset() {
+	p.source.Reset()
 }
 
 // mustGetNext tries to get the next value from source and copy it into the memory buffer.
@@ -73,34 +73,34 @@ func (s *fromPipe[TSource, TResult]) Reset() {
 // If there are no more values in source it will write an EOS message. If an error is
 // generated, it will attempt to write the error to the memory buffer - if the writing of the
 // error to the buffer fails it will panic.
-func (s *fromPipe[TSource, TResult]) mustGetNext() module.MemSize {
-	index, err := s.getNext()
+func (p *fromPipe[TSource, TResult]) mustGetNext() module.MemSize {
+	index, err := p.getNext()
 	if err != nil {
-		return mustWriteErr(s.instance, err)
+		return mustWriteErr(p.instance, err)
 	}
 
 	return index
 }
 
-func (s *fromPipe[TSource, TResult]) getNext() (module.MemSize, error) {
-	hasNext, err := s.source.Next()
+func (p *fromPipe[TSource, TResult]) getNext() (module.MemSize, error) {
+	hasNext, err := p.source.Next()
 	if err != nil {
 		return 0, err
 	}
 	if !hasNext {
-		return writeEOS(s.instance)
+		return writeEOS(p.instance)
 	}
 
-	value, err := s.source.Bytes()
+	value, err := p.source.Bytes()
 	if err != nil {
 		return 0, err
 	}
 
-	index, err := s.instance.Alloc(module.MemSize(len(value)))
+	index, err := p.instance.Alloc(module.MemSize(len(value)))
 	if err != nil {
 		return 0, err
 	}
 
-	copy(s.instance.GetData()[index:], value)
+	copy(p.instance.GetData()[index:], value)
 	return index, nil
 }
