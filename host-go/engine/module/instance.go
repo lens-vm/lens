@@ -21,7 +21,7 @@ type Instance struct {
 	// module after this function has been called are not guaranteed to be visible to the previously returned slice.
 	GetData func() []byte
 
-	// ownedBy hosts a reference to any object(s) that may be required to live in memory for the lifetime of this Module.
+	// OwnedBy hosts a reference to any object(s) that may be required to live in memory for the lifetime of this Module.
 	//
 	// This is very important when working with some libraries (such as wasmer-go), as without this dependencies of other members
 	// of this Module may be garbage collected prematurely.
