@@ -53,7 +53,7 @@ func TestWasm32PipelineWithSharedState(t *testing.T) {
 	assert.True(t, hasNext)
 
 	val, err := pipe.Value()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, Value{
 		// As the same module instance is shared 3 times, the counter will have been incremented
 		// 3 times, from a start point of 0
@@ -68,7 +68,7 @@ func TestWasm32PipelineWithSharedState(t *testing.T) {
 	assert.True(t, hasNext)
 
 	val, err = pipe.Value()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, Value{
 		// As the same module instance is shared 3 times, the counter will have been incremented
 		// 3 times, from a start point of 3
@@ -83,7 +83,7 @@ func TestWasm32PipelineWithSharedState(t *testing.T) {
 	assert.True(t, hasNext)
 
 	val, err = pipe.Value()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, Value{
 		// As the same module instance is shared 3 times, the counter will have been incremented
 		// 3 times, from a start point of 6
