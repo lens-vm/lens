@@ -2,7 +2,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import { JSON, JSONEncoder } from "assemblyscript-json"; 
+import { JSON, JSONEncoder } from "assemblyscript-json";
+
+@external("lens", "next")
+export declare function next(): usize
 
 // AssemblyScript demands that an abort func exists, so we define our own here and ask the compiler to use it
 // instead of an import (see asconfig.json "use" flag), and https://www.assemblyscript.org/concepts.html#special-imports
@@ -17,18 +20,32 @@ function abort(
     unreachable()
 }
 
-const JSON_TYPE_ID: i8 = 1;
+class StreamOption {
+    json: String
+    endOfStream: bool
 
-export function alloc(size: usize): usize {
-    let buf = new ArrayBuffer(i32(size));
-    let ptr = changetype<usize>(buf);
-    store<ArrayBuffer>(ptr, buf);
-    return ptr;
+    constructor(json: String, endOfStream: bool) {
+        this.json = json;
+        this.endOfStream = endOfStream;
+    }
 }
 
-export function transform(ptr: usize): usize {
-    let inputStr = fromTransportVec(ptr)
-    let inputJsonObj = <JSON.Obj>(JSON.parse(inputStr));
+const JSON_TYPE_ID: i8 = 1;
+const EOS_TYPE_ID: i8 = 127;
+
+export function alloc(size: usize): usize {
+    return heap.alloc(size);
+}
+
+export function transform(): usize {
+    let ptr = next();
+    let streamOption = fromTransportVec(ptr)
+    if (streamOption.endOfStream) {
+        heap.free(ptr)
+        return toTransportVec(EOS_TYPE_ID, "");
+    }
+
+    let inputJsonObj = <JSON.Obj>(JSON.parse(streamOption.json));
 
     let inputName = inputJsonObj.getString("FullName");
     let inputAge = inputJsonObj.getInteger("Age");
@@ -43,13 +60,19 @@ export function transform(ptr: usize): usize {
     }
     encoder.popObject()
 
-    return toTransportVec(JSON_TYPE_ID, encoder.toString());
+    let resultPtr = toTransportVec(JSON_TYPE_ID, encoder.toString());
+    // Free the input data once we are done processing
+    heap.free(ptr)
+    return resultPtr
 }
 
-function fromTransportVec(ptr: usize): string {
+function fromTransportVec(ptr: usize): StreamOption {
     let type = load<i8>(ptr)
+    if (type == EOS_TYPE_ID) {
+        return new StreamOption("", true)
+    }
     let len = load<u32>(ptr+1)
-    return String.UTF8.decodeUnsafe(ptr+1+4, len, false)
+    return new StreamOption(String.UTF8.decodeUnsafe(ptr+1+4, len, false), false)
 }
 
 function toTransportVec(type_id: i8, message: string): usize {
@@ -57,10 +80,17 @@ function toTransportVec(type_id: i8, message: string): usize {
 
     let buf = new Uint8Array(len+1+4);
     let ptr = changetype<usize>(buf);
-    store<i8>(ptr, len);
-    store<u32>(ptr+1, len);
+    store<i8>(ptr, type_id);
 
-    String.UTF8.encodeUnsafe(changetype<usize>(message), len, ptr+1+4, false)
+    switch (type_id) {
+        case EOS_TYPE_ID:
+            // // no-op - End of stream messages have no value component that needs writing
+            break;
+
+        default:
+            store<u32>(ptr+1, len);
+            String.UTF8.encodeUnsafe(changetype<usize>(message), len, ptr+1+4, false)
+    }
 
     return ptr
 }

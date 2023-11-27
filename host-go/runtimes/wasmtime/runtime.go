@@ -50,7 +50,16 @@ func (rt *wRuntime) NewModule(wasmBytes []byte) (module.Module, error) {
 }
 
 func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) (module.Instance, error) {
-	instance, err := wasmtime.NewInstance(m.rt.store, m.module, []wasmtime.AsExtern{})
+	// We require a non-nil placeholder else Go will panic upon reassignment (nil pointer de-reference)
+	nextFunction := func() module.MemSize { return 0 }
+	nextImport := wasmtime.WrapFunc(
+		m.rt.store,
+		func() module.MemSize {
+			return nextFunction()
+		},
+	)
+
+	instance, err := wasmtime.NewInstance(m.rt.store, m.module, []wasmtime.AsExtern{nextImport})
 	if err != nil {
 		return module.Instance{}, err
 	}
@@ -126,8 +135,12 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 			}
 			return r.(module.MemSize), err
 		},
-		Transform: func(u module.MemSize) (module.MemSize, error) {
-			r, err := transform.Call(m.rt.store, u)
+		Transform: func(next func() module.MemSize) (module.MemSize, error) {
+			// By assigning the next function immediately prior to calling transform, we allow multiple
+			// pipeline stages to share the same wasm instance - provided they are not called concurrently.
+			// This also allows module state to be shared across pipeline stages.
+			nextFunction = next
+			r, err := transform.Call(m.rt.store)
 			if err != nil {
 				return 0, err
 			}

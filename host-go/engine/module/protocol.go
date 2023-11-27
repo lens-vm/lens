@@ -6,6 +6,7 @@ package module
 
 import (
 	"encoding/binary"
+	"math"
 )
 
 // LenType is the type used to represent the byte length of an item transmitted to/from a lens module.
@@ -39,13 +40,27 @@ var LenByteOrder = binary.LittleEndian
 type MemSize = int32
 
 const (
+	ErrTypeID  TypeIdType = -1
 	NilTypeID  TypeIdType = 0
 	JSONTypeID TypeIdType = 1
+
+	// A type id that denotes the end of stream.
+	//
+	// If recieved it signals that the end of the stream has been reached and that the source will no longer yield
+	// new values.
+	EOSTypeID TypeIdType = math.MaxInt8
 )
 
 // IsError returns true if the given typeId is an error type.
 //
 // Otherwise returns false.
-func IsError(typeId TypeIdType) bool {
+func (typeId TypeIdType) IsError() bool {
 	return typeId < 0
+}
+
+// IsEOS returns true if the given typeId declares that the end of stream has been reached.
+//
+// Otherwise returns false.
+func (typeId TypeIdType) IsEOS() bool {
+	return typeId == EOSTypeID
 }
