@@ -1,7 +1,11 @@
 [package]
 name = "lens_sdk"
+description = "An SDK for writing bi-directional, wasm based, LensVM transformations in Rust"
 version = "0.5.0"
 edition = "2021"
+readme = "../README.md"
+repository = "https://github.com/lens-vm/lens"
+license-file = "../LICENSE"
 
 [lib]
 crate-type = ["lib"]
