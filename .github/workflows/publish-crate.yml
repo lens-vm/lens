@@ -1,0 +1,32 @@
+## This Source Code Form is subject to the terms of the Mozilla Public
+## License, v. 2.0. If a copy of the MPL was not distributed with this
+## file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+name: Publish Crate Workflow
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish-crate:
+    name: Publish crate job
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code into the directory
+        uses: actions/checkout@v3
+
+      - name: Install minimal and stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Publish the rust SDK to registry
+        env:
+          # Token for crates.io uses environment var `$CARGO_REGISTRY_TOKEN`
+          CARGO_REGISTRY_TOKEN: ${{ secrets.SOURCE_DEVS_ALL_PERMS_TOKEN_CRATES_IO }}
+        working-directory: ./sdk-rust
+        run: cargo publish
