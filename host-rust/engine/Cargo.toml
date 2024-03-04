@@ -1,0 +1,13 @@
+[package]
+name = "lens_host"
+description = ""
+version = "0.5.0"
+edition = "2021"
+readme = "../README.md"
+repository = "https://github.com/lens-vm/lens"
+license-file = "../LICENSE"
+
+[lib]
+crate-type = ["lib"]
+
+[dependencies]

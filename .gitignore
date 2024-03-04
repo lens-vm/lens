@@ -21,4 +21,6 @@ tests/modules/rust_wasm32_normalize/target
 tests/modules/rust_wasm32_normalize/pkg
 sdk-rust/target
 sdk-rust/Cargo.lock
+host-rust/engine/target
+host-rust/engine/Cargo.lock
 host-go/build/host-go.exe

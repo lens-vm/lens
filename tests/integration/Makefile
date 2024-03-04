@@ -2,6 +2,7 @@
 deps\:test:
 	$(MAKE) -C ../modules build
 	$(MAKE) -C ../../host-go build
+	$(MAKE) -C ../../host-rust build
 
 .PHONY: clean
 clean:

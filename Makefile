@@ -2,11 +2,13 @@
 deps\:test-ci:
 	go install gotest.tools/gotestsum@latest
 	$(MAKE) -C ./host-go build
+	$(MAKE) -C ./host-rust build
 	$(MAKE) -C ./tests/modules build
 
 .PHONY: deps\:test
 deps\:test:
 	$(MAKE) -C ./host-go build
+	$(MAKE) -C ./host-rust build
 	$(MAKE) -C ./tests/modules build
 
 .PHONY: test
