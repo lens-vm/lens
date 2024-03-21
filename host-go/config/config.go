@@ -9,7 +9,7 @@ import (
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/lens-vm/lens/host-go/engine"
 	"github.com/lens-vm/lens/host-go/engine/module"
-	"github.com/lens-vm/lens/host-go/runtimes/wasmtime"
+	"github.com/lens-vm/lens/host-go/runtimes"
 	"github.com/sourcenetwork/immutable/enumerable"
 )
 
@@ -31,7 +31,7 @@ func LoadFromFile[TSource any, TResult any](path string, src enumerable.Enumerab
 //
 // It does not enumerate the src.
 func Load[TSource any, TResult any](lensConfig model.Lens, src enumerable.Enumerable[TSource]) (enumerable.Enumerable[TResult], error) {
-	runtime := wasmtime.New()
+	runtime := runtimes.Default()
 	modulesByPath := map[string]module.Module{}
 
 	return LoadInto[TSource, TResult](runtime, modulesByPath, lensConfig, src)
