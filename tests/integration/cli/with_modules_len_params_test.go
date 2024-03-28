@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"encoding/base64"
 	"testing"
 
 	"github.com/lens-vm/lens/tests/modules"
@@ -23,10 +24,10 @@ func TestWithModulesWithNormalizeWithParams(t *testing.T) {
 			{
 				"lenses": [
 					{
-						"path": "` + modules.WasmPath7 + `"
+						"content": "` + base64.StdEncoding.EncodeToString(modules.RustWasm32Normalize) + `"
 					},
 					{
-						"path": "` + modules.WasmPath4 + `",
+						"content": "` + base64.StdEncoding.EncodeToString(modules.RustWasm32Rename) + `",
 						"arguments": {
 							"src": "Number",
 							"dst": "PageNumber"

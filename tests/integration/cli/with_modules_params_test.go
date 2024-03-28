@@ -5,6 +5,7 @@
 package integration
 
 import (
+	"encoding/base64"
 	"testing"
 
 	"github.com/lens-vm/lens/tests/modules"
@@ -28,14 +29,14 @@ func TestWithModulesWithParams(t *testing.T) {
 			{
 				"lenses": [
 					{
-						"path": "` + modules.WasmPath4 + `",
+						"content": "` + base64.StdEncoding.EncodeToString(modules.RustWasm32Rename) + `",
 						"arguments": {
 							"src": "Name",
 							"dst": "LastName"
 						}
 					},
 					{
-						"path": "` + modules.WasmPath4 + `",
+						"content": "` + base64.StdEncoding.EncodeToString(modules.RustWasm32Rename) + `",
 						"arguments": {
 							"src": "LastName",
 							"dst": "MiddleName"

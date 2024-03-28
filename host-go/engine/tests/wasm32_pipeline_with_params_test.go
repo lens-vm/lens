@@ -18,7 +18,7 @@ import (
 func TestWasm32PipelineWithAddtionalParams(t *testing.T) {
 	runtime := newRuntime()
 
-	module, err := engine.NewModule(runtime, modules.WasmPath4)
+	module, err := engine.NewModule(runtime, modules.RustWasm32Rename)
 	if err != nil {
 		t.Error(err)
 	}
@@ -65,7 +65,7 @@ func TestWasm32PipelineWithAddtionalParams(t *testing.T) {
 func TestWasm32PipelineMultipleModulesAndWithAddtionalParams(t *testing.T) {
 	runtime := newRuntime()
 
-	module, err := engine.NewModule(runtime, modules.WasmPath4)
+	module, err := engine.NewModule(runtime, modules.RustWasm32Rename)
 	if err != nil {
 		t.Error(err)
 	}
@@ -127,7 +127,7 @@ func TestWasm32PipelineMultipleModulesAndWithAddtionalParams(t *testing.T) {
 func TestWasm32PipelineWithAddtionalParamsErrors(t *testing.T) {
 	runtime := newRuntime()
 
-	module, err := engine.NewModule(runtime, modules.WasmPath4)
+	module, err := engine.NewModule(runtime, modules.RustWasm32Rename)
 	if err != nil {
 		t.Error(err)
 	}
@@ -164,7 +164,7 @@ func TestWasm32PipelineWithAddtionalParamsErrors(t *testing.T) {
 func TestWasm32PipelineWithAddtionalParamsErrorsAndNilItem(t *testing.T) {
 	runtime := newRuntime()
 
-	module, err := engine.NewModule(runtime, modules.WasmPath4)
+	module, err := engine.NewModule(runtime, modules.RustWasm32Rename)
 	if err != nil {
 		t.Error(err)
 	}

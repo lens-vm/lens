@@ -5,7 +5,6 @@
 package config
 
 import (
-	"github.com/lens-vm/lens/host-go/config/internal/json"
 	"github.com/lens-vm/lens/host-go/config/model"
 	"github.com/lens-vm/lens/host-go/engine"
 	"github.com/lens-vm/lens/host-go/engine/module"
@@ -13,48 +12,14 @@ import (
 	"github.com/sourcenetwork/immutable/enumerable"
 )
 
-// LoadFromFile loads a lens file at the given path and applies it to the provided src.
-//
-// It does not enumerate the src.
-func LoadFromFile[TSource any, TResult any](path string, src enumerable.Enumerable[TSource]) (enumerable.Enumerable[TResult], error) {
-	// We only support json lens files at the moment, so we just trust that it is json.
-	// In the future we'll need to determine which format the file is in.
-	lensConfig, err := json.Load(path)
-	if err != nil {
-		return nil, err
-	}
-
-	return Load[TSource, TResult](lensConfig, src)
-}
-
 // Load constructs a lens from the given config and applies it to the provided src.
 //
 // It does not enumerate the src.
 func Load[TSource any, TResult any](lensConfig model.Lens, src enumerable.Enumerable[TSource]) (enumerable.Enumerable[TResult], error) {
 	runtime := runtimes.Default()
-	modulesByPath := map[string]module.Module{}
+	modulesByHash := map[string]module.Module{}
 
-	return LoadInto[TSource, TResult](runtime, modulesByPath, lensConfig, src)
-}
-
-// LoadIntoFromFile loads a lens file at the given path and applies it to the provided src
-// extending the provided runtime and module cache.
-//
-// It does not enumerate the src. Any new modules will be added to the given module map.
-func LoadIntoFromFile[TSource any, TResult any](
-	runtime module.Runtime,
-	modulesByPath map[string]module.Module,
-	path string,
-	src enumerable.Enumerable[TSource],
-) (enumerable.Enumerable[TResult], error) {
-	// We only support json lens files at the moment, so we just trust that it is json.
-	// In the future we'll need to determine which format the file is in.
-	lensConfig, err := json.Load(path)
-	if err != nil {
-		return nil, err
-	}
-
-	return LoadInto[TSource, TResult](runtime, modulesByPath, lensConfig, src)
+	return LoadInto[TSource, TResult](runtime, modulesByHash, lensConfig, src)
 }
 
 // LoadInto constructs a lens from the given config and applies it to the provided src
@@ -63,27 +28,29 @@ func LoadIntoFromFile[TSource any, TResult any](
 // It does not enumerate the src. Any new modules will be added to the given module map.
 func LoadInto[TSource any, TResult any](
 	runtime module.Runtime,
-	modulesByPath map[string]module.Module,
+	modulesByHash map[string]module.Module,
 	lensConfig model.Lens,
 	src enumerable.Enumerable[TSource],
 ) (enumerable.Enumerable[TResult], error) {
 	for _, moduleCfg := range lensConfig.Lenses {
+		hash := moduleCfg.Hash()
 		// Modules are fairly expensive objects, and they can be reused, so we de-duplicate
 		// the WAT code paths here and make sure we only create unique module objects.
-		if _, ok := modulesByPath[moduleCfg.Path]; ok {
+		if _, ok := modulesByHash[hash]; ok {
 			continue
 		}
 
-		lensModule, err := engine.NewModule(runtime, moduleCfg.Path)
+		lensModule, err := engine.NewModule(runtime, moduleCfg.Content)
 		if err != nil {
 			return nil, err
 		}
-		modulesByPath[moduleCfg.Path] = lensModule
+		modulesByHash[hash] = lensModule
 	}
 
 	instances := []module.Instance{}
 	for _, moduleCfg := range lensConfig.Lenses {
-		lensModule := modulesByPath[moduleCfg.Path]
+		hash := moduleCfg.Hash()
+		lensModule := modulesByHash[hash]
 
 		var instance module.Instance
 		var err error

@@ -18,7 +18,7 @@ import (
 func TestWasm32PipelineFromSourceAsFull(t *testing.T) {
 	runtime := newRuntime()
 
-	module, err := engine.NewModule(runtime, modules.WasmPath1)
+	module, err := engine.NewModule(runtime, modules.RustWasm32Simple)
 	if err != nil {
 		t.Error(err)
 	}
@@ -59,11 +59,11 @@ func TestWasm32PipelineFromSourceAsFull(t *testing.T) {
 func TestWasm32PipelineFromSourceAsFullToModuleAsFull(t *testing.T) {
 	runtime := newRuntime()
 
-	module1, err := engine.NewModule(runtime, modules.WasmPath1)
+	module1, err := engine.NewModule(runtime, modules.RustWasm32Simple)
 	if err != nil {
 		t.Error(err)
 	}
-	module2, err := engine.NewModule(runtime, modules.WasmPath2)
+	module2, err := engine.NewModule(runtime, modules.RustWasm32Simple2)
 	if err != nil {
 		t.Error(err)
 	}
@@ -110,11 +110,11 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFull(t *testing.T) {
 func TestWasm32PipelineFromSourceAsFullToModuleAsFullToModuleAsFull(t *testing.T) {
 	runtime := newRuntime()
 
-	module1, err := engine.NewModule(runtime, modules.WasmPath1)
+	module1, err := engine.NewModule(runtime, modules.RustWasm32Simple)
 	if err != nil {
 		t.Error(err)
 	}
-	module2, err := engine.NewModule(runtime, modules.WasmPath2)
+	module2, err := engine.NewModule(runtime, modules.RustWasm32Simple2)
 	if err != nil {
 		t.Error(err)
 	}
@@ -162,15 +162,15 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFullToModuleAsFull(t *testing.T
 func TestWasm32PipelineFromSourceAsFullToModuleAsFullToASModuleAsFull(t *testing.T) {
 	runtime := newRuntime()
 
-	module1, err := engine.NewModule(runtime, modules.WasmPath1)
+	module1, err := engine.NewModule(runtime, modules.RustWasm32Simple)
 	if err != nil {
 		t.Error(err)
 	}
-	module2, err := engine.NewModule(runtime, modules.WasmPath2)
+	module2, err := engine.NewModule(runtime, modules.RustWasm32Simple2)
 	if err != nil {
 		t.Error(err)
 	}
-	module3, err := engine.NewModule(runtime, modules.WasmPath3)
+	module3, err := engine.NewModule(runtime, modules.AsWasm32Simple)
 	if err != nil {
 		t.Error(err)
 	}
@@ -221,11 +221,11 @@ func TestWasm32PipelineFromSourceAsFullToModuleAsFullToASModuleAsFull(t *testing
 func TestWasm32PipelineFromSourceAsFullToModuleAsFullToModuleAsFullWithSingleAppend(t *testing.T) {
 	runtime := newRuntime()
 
-	module1, err := engine.NewModule(runtime, modules.WasmPath1)
+	module1, err := engine.NewModule(runtime, modules.RustWasm32Simple)
 	if err != nil {
 		t.Error(err)
 	}
-	module2, err := engine.NewModule(runtime, modules.WasmPath2)
+	module2, err := engine.NewModule(runtime, modules.RustWasm32Simple2)
 	if err != nil {
 		t.Error(err)
 	}

@@ -5,6 +5,7 @@
 package integration
 
 import (
+	"encoding/base64"
 	"testing"
 
 	"github.com/lens-vm/lens/tests/modules"
@@ -23,7 +24,7 @@ func TestInverse(t *testing.T) {
 			{
 				"lenses": [
 					{
-						"path": "` + modules.WasmPath2 + `",
+						"content": "` + base64.StdEncoding.EncodeToString(modules.RustWasm32Simple2) + `",
 						"inverse": true
 					}
 				]
@@ -73,7 +74,7 @@ func TestInverseErrorsGivenNoInverseAvailable(t *testing.T) {
 			{
 				"lenses": [
 					{
-						"path": "` + modules.WasmPath1 + `",
+						"content": "` + base64.StdEncoding.EncodeToString(modules.RustWasm32Simple) + `",
 						"inverse": true
 					}
 				]

@@ -8,23 +8,33 @@ of a given lens file.
 */
 package model
 
+import (
+	"crypto/sha256"
+	"encoding/hex"
+)
+
 type Lens struct {
 	// The LensModules that should be applied to the source data, declared in the order
 	// in which they should be executed.
-	Lenses []LensModule
+	Lenses []LensModule `json:"lenses"`
 }
 
 type LensModule struct {
-	// The path to the wasm binary containing the lens transform that you wish to be applied.
-	Path string
+	// Content is the WASM binary
+	Content []byte `json:"content"`
 
 	// If true, the module will be inversed.
 	//
 	// This may result in an error if the module does not provide an inverse function.
-	Inverse bool
+	Inverse bool `json:"inverse"`
 
 	// Any additional parameters that you wish to be passed to the lens transform.
 	//
 	// The lens module must expose a `set_param` function if values are provided here.
-	Arguments map[string]any
+	Arguments map[string]any `json:"arguments"`
+}
+
+func (m LensModule) Hash() string {
+	hash := sha256.Sum256(m.Content)
+	return hex.EncodeToString(hash[:])
 }

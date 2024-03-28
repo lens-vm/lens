@@ -6,7 +6,7 @@ package tests
 
 import (
 	"github.com/lens-vm/lens/host-go/engine/module"
-	"github.com/lens-vm/lens/host-go/runtimes/wasmtime"
+	"github.com/lens-vm/lens/host-go/runtimes"
 )
 
 type type1 struct {
@@ -20,5 +20,5 @@ type type2 struct {
 }
 
 func newRuntime() module.Runtime {
-	return wasmtime.New()
+	return runtimes.Default()
 }

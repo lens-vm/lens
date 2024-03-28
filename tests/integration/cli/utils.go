@@ -45,13 +45,6 @@ func getPathRelativeToProjectRoot(relativePath string) string {
 }
 
 func executeTest[TSource any, TResult any](t *testing.T, testCase TestCase[TSource, TResult]) {
-	tempDir := t.TempDir()
-	lensFilePath := path.Join(tempDir, "lensFile.json")
-	err := os.WriteFile(lensFilePath, []byte(testCase.LensFile), 0700)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	inputBytes, err := json.Marshal(testCase.Input)
 	if err != nil {
 		t.Fatal(err)
@@ -59,7 +52,7 @@ func executeTest[TSource any, TResult any](t *testing.T, testCase TestCase[TSour
 	inputJson := string(inputBytes)
 
 	for _, hostPath := range hostExecutablePaths {
-		pipeLineCommand := exec.Command(hostPath, lensFilePath)
+		pipeLineCommand := exec.Command(hostPath)
 
 		var stderr bytes.Buffer
 		pipeLineCommand.Stderr = &stderr
@@ -73,6 +66,11 @@ func executeTest[TSource any, TResult any](t *testing.T, testCase TestCase[TSour
 		pipeLineCommand.Stdout = &stdout
 
 		err = pipeLineCommand.Start()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		_, err = io.WriteString(stdin, testCase.LensFile)
 		if err != nil {
 			t.Fatal(err)
 		}
