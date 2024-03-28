@@ -8,106 +8,86 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"io"
 
 	"github.com/lens-vm/lens/host-go/engine/module"
 )
 
-// GetItem returns the item at the given index.  This includes the length specifier.
-func GetItem(src []byte, startIndex module.MemSize) ([]byte, error) {
+// ReadTypeId returns the type id of the next item from the given reader.
+func ReadTypeId(r io.Reader) (module.TypeIdType, error) {
 	typeBuffer := make([]byte, module.TypeIdSize)
-	copy(typeBuffer, src[startIndex:startIndex+module.TypeIdSize])
+	typeReader := bytes.NewReader(typeBuffer)
+
+	_, err := r.Read(typeBuffer)
+	if err != nil {
+		return 0, err
+	}
 	var typeId module.TypeIdType
-	reader := bytes.NewReader(typeBuffer)
-	err := binary.Read(reader, module.TypeIdByteOrder, &typeId)
+	err = binary.Read(typeReader, module.TypeIdByteOrder, &typeId)
+	if err != nil {
+		return 0, err
+	}
+	return typeId, nil
+}
+
+// ReadItem returns the bytes of the next item from the given reader.
+func ReadItem(r io.Reader) ([]byte, error) {
+	typeId, err := ReadTypeId(r)
 	if err != nil {
 		return nil, err
 	}
 
+	// type is nil so nothing else to read
 	if typeId == module.NilTypeID {
 		return nil, nil
 	}
 
 	lenBuffer := make([]byte, module.LenSize)
-	copy(lenBuffer, src[startIndex+module.TypeIdSize:startIndex+module.TypeIdSize+module.LenSize])
+	lenReader := bytes.NewReader(lenBuffer)
+
+	// read the item length
+	_, err = r.Read(lenBuffer)
+	if err != nil {
+		return nil, err
+	}
 	var len module.LenType
-	reader = bytes.NewReader(lenBuffer)
-	err = binary.Read(reader, module.LenByteOrder, &len)
+	err = binary.Read(lenReader, module.LenByteOrder, &len)
+	if err != nil {
+		return nil, err
+	}
+
+	// read the item bytes
+	data := make([]byte, len)
+	_, err = r.Read(data)
 	if err != nil {
 		return nil, err
 	}
 
 	if typeId.IsError() {
-		return nil, errors.New(
-			string(
-				src[startIndex+module.TypeIdSize+module.LenSize : startIndex+module.TypeIdSize+module.MemSize(len)+module.LenSize],
-			),
-		)
+		return nil, errors.New(string(data))
 	}
-
-	// todo - the end index of this is untested, as it will only affect performance atm if it is longer than desired
-	// unless it overwrites adjacent stuff
-	return src[startIndex : startIndex+module.TypeIdSize+module.MemSize(len)+module.LenSize], nil
+	return data, nil
 }
 
-// WriteItem calculates the length specifier for the given source object and then writes both specifier
-// and item to the destination.
-func WriteItem(typeId module.TypeIdType, src []byte, dst []byte) error {
-	typeWriter := bytes.NewBuffer([]byte{})
-	err := binary.Write(typeWriter, module.TypeIdByteOrder, typeId)
+func WriteItem(w io.Writer, id module.TypeIdType, data []byte) error {
+	// write the item type id
+	err := binary.Write(w, module.TypeIdByteOrder, id)
 	if err != nil {
 		return err
 	}
-	copy(dst, typeWriter.Bytes())
 
-	switch typeId {
-	case module.EOSTypeID:
-		// no-op - End of stream messages have no value component that needs writing
-
-	default:
-		len := module.LenType(len(src))
-		lenWriter := bytes.NewBuffer([]byte{})
-		err = binary.Write(lenWriter, module.LenByteOrder, len)
-		if err != nil {
-			return err
-		}
-
-		copy(dst[module.TypeIdSize:], lenWriter.Bytes())
-		copy(dst[module.TypeIdSize+module.LenSize:], src)
+	// end of stream messages have no value component that needs writing
+	if id.IsEOS() {
+		return nil
 	}
 
-	return nil
-}
-
-// writeEOS writes the end-of-stream type id to the module memory and returns its location.
-func writeEOS(m module.Instance) (module.MemSize, error) {
-	index, err := m.Alloc(module.TypeIdSize)
+	// write the item length
+	err = binary.Write(w, module.LenByteOrder, module.LenType(len(data)))
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	err = WriteItem(module.EOSTypeID, []byte{}, m.GetData()[index:])
-	if err != nil {
-		return 0, err
-	}
-
-	return index, nil
-}
-
-// mustWriteErr writes the given error to the given module's memory, returning its location.
-//
-// Will panic if an error is generated during writing.
-func mustWriteErr(m module.Instance, err error) module.MemSize {
-	errText := err.Error()
-
-	index, err := m.Alloc(module.TypeIdSize + module.LenSize + int32(len(errText)))
-	if err != nil {
-		panic(err)
-	}
-
-	err = WriteItem(module.ErrTypeID, []byte(errText), m.GetData()[index:])
-	if err != nil {
-		panic(err)
-	}
-
-	return index
+	// write the item bytes
+	_, err = w.Write(data)
+	return err
 }

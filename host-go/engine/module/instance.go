@@ -4,6 +4,8 @@
 
 package module
 
+import "io"
+
 // Instance is the representation of loaded lens module. This will often be sourced from a WASM binary
 // but it does not have to be.
 type Instance struct {
@@ -15,11 +17,12 @@ type Instance struct {
 	// The next function provided should return a wasm memory pointer to the next source item to be transformed.
 	Transform func(next func() MemSize) (MemSize, error)
 
-	// GetData returns the current state of the linear memory that this module uses.
+	// Memory returns an io.ReadWriter that can be used to read or write to the
+	// linear memory that this module uses starting at the given offset.
 	//
-	// Values written to the return slice will be made available to this module, however changes made by the
-	// module after this function has been called are not guaranteed to be visible to the previously returned slice.
-	GetData func() []byte
+	// Values written to memory will be made available to this module, however changes made by the
+	// module after this function has been called are not guaranteed to be visible to the returned io.Reader.
+	Memory func(offset int32) io.ReadWriter
 
 	// OwnedBy hosts a reference to any object(s) that may be required to live in memory for the lifetime of this Module.
 	//

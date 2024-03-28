@@ -7,11 +7,15 @@
 package js
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"sync"
 	"syscall/js"
 
 	"github.com/lens-vm/lens/host-go/engine/module"
+	"github.com/lens-vm/lens/host-go/engine/pipes"
 )
 
 type wRuntime struct {
@@ -71,23 +75,23 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 	instance := results[0]
 
 	// https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/Instance/exports
-	// exports := instance.Get("exports")
+	exports := instance.Get("exports")
 
 	// https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/Memory
-	// memory := exports.Get("memory")
-	// if memory.Type() != js.TypeObject {
-	// 	return module.Instance{}, errors.New("Export 'memory' does not exist")
-	// }
+	memory := exports.Get("memory")
+	if memory.Type() != js.TypeObject {
+		return module.Instance{}, errors.New("Export 'memory' does not exist")
+	}
 
-	// alloc := exports.Get("alloc")
-	// if alloc.Type() != js.TypeFunction {
-	// 	return module.Instance{}, errors.New("Export 'alloc' does not exist")
-	// }
+	alloc := exports.Get("alloc")
+	if alloc.Type() != js.TypeFunction {
+		return module.Instance{}, errors.New("Export 'alloc' does not exist")
+	}
 
-	// transform := exports.Get(functionName)
-	// if transform.Type() != js.TypeFunction {
-	// 	return module.Instance{}, errors.New(fmt.Sprintf("Export '%s' does not exist", functionName))
-	// }
+	transform := exports.Get(functionName)
+	if transform.Type() != js.TypeFunction {
+		return module.Instance{}, errors.New(fmt.Sprintf("Export '%s' does not exist", functionName))
+	}
 
 	params := map[string]any{}
 	// Merge the param sets into a single map in case more than
@@ -99,44 +103,40 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 	}
 
 	if len(params) > 0 {
-		// 	setParam := exports.Get("set_param")
-		// 	if setParam.Type() != js.TypeFunction {
-		// 		return module.Instance{}, errors.New("Export 'set_param' does not exist")
-		// 	}
+		setParam := exports.Get("set_param")
+		if setParam.Type() != js.TypeFunction {
+			return module.Instance{}, errors.New("Export 'set_param' does not exist")
+		}
 
-		// 	sourceBytes, err := json.Marshal(params)
-		// 	if err != nil {
-		// 		return module.Instance{}, err
-		// 	}
+		sourceBytes, err := json.Marshal(params)
+		if err != nil {
+			return module.Instance{}, err
+		}
 
-		// 	// allocate memory to write to
-		// 	index := alloc.Invoke(module.TypeIdSize + module.MemSize(len(sourceBytes)) + module.LenSize)
-		// 	// read the JavaScript memory into a go slice
-		// 	temp := getData()
+		// allocate memory to write to
+		index := alloc.Invoke(module.TypeIdSize + module.MemSize(len(sourceBytes)) + module.LenSize)
+		mem := newMemory(memory.Get("buffer"), int32(index.Int()))
+		err = pipes.WriteItem(mem, module.JSONTypeID, sourceBytes)
+		if err != nil {
+			return module.Instance{}, err
+		}
 
-		// 	err = pipes.WriteItem(module.JSONTypeID, sourceBytes, temp[index.Int():])
-		// 	if err != nil {
-		// 		return module.Instance{}, err
-		// 	}
+		// set param from JavaScript memory
+		index = setParam.Invoke(index)
+		mem = newMemory(memory.Get("buffer"), int32(index.Int()))
 
-		// 	// copy the bytes back to JavaScript memory
-		// 	js.CopyBytesToJS(data, temp)
-		// 	// set param from JavaScript memory
-		// 	r := setParam.Invoke(index)
-		// 	// read the JavaScript memory into a go slice
-		// 	temp = getData()
-
-		// 	// The `set_param` wasm function may error, in which case the error needs to be retrieved
-		// 	// from memory using `pipes.GetItem`.
-		// 	_, err = pipes.GetItem(temp, module.MemSize(r.Int()))
-		// 	if err != nil {
-		// 		return module.Instance{}, err
-		// 	}
+		// The `set_param` wasm function may error, in which case the error needs to be retrieved
+		// from memory using `pipes.GetItem`.
+		_, err = pipes.ReadItem(mem)
+		if err != nil {
+			return module.Instance{}, err
+		}
 	}
 
 	return module.Instance{
 		Alloc: func(u module.MemSize) (module.MemSize, error) {
-			result := instance.Get("exports").Call("alloc", int32(u))
+			// result := instance.Get("exports").Call("alloc", int32(u))
+			result := alloc.Invoke(int32(u))
 			return module.MemSize(result.Int()), nil
 		},
 		Transform: func(next func() module.MemSize) (module.MemSize, error) {
@@ -144,17 +144,12 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 			// pipeline stages to share the same wasm instance - provided they are not called concurrently.
 			// This also allows module state to be shared across pipeline stages.
 			nextFunction = next
-			result := instance.Get("exports").Call(functionName)
+			result := transform.Invoke()
 			return module.MemSize(result.Int()), nil
 		},
-		GetData: func() []byte {
-			// GetData should return a byte array that supports both read and write!!!!!
-
-			buffer := instance.Get("exports").Get("memory").Get("buffer")
-			data := js.Global().Get("Uint8Array").New(buffer)
-			temp := make([]byte, data.Get("length").Int())
-			js.CopyBytesToGo(temp, data)
-			return temp
+		Memory: func(offset int32) io.ReadWriter {
+			buffer := memory.Get("buffer")
+			return newMemory(buffer, offset)
 		},
 		OwnedBy: instance,
 	}, nil

@@ -35,8 +35,11 @@ func (s *fromSource[TSource, TResult]) Next() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-
-	if module.TypeIdType(s.instance.GetData()[index]).IsEOS() {
+	typeId, err := ReadTypeId(s.instance.Memory(index))
+	if err != nil {
+		return false, err
+	}
+	if typeId.IsEOS() {
 		return false, nil
 	}
 
@@ -47,14 +50,13 @@ func (s *fromSource[TSource, TResult]) Next() (bool, error) {
 func (s *fromSource[TSource, TResult]) Value() (TResult, error) {
 	var t TResult
 
-	item, err := GetItem(s.instance.GetData(), s.currentIndex)
+	item, err := ReadItem(s.instance.Memory(s.currentIndex))
 	if err != nil || item == nil {
 		return t, err
 	}
-	jsonBytes := item[module.TypeIdSize+module.LenSize:]
 
 	result := &t
-	err = json.Unmarshal(jsonBytes, result)
+	err = json.Unmarshal(item, result)
 	if err != nil {
 		return t, err
 	}
@@ -63,7 +65,7 @@ func (s *fromSource[TSource, TResult]) Value() (TResult, error) {
 }
 
 func (s *fromSource[TSource, TResult]) Bytes() ([]byte, error) {
-	return GetItem(s.instance.GetData(), s.currentIndex)
+	return ReadItem(s.instance.Memory(s.currentIndex))
 }
 
 func (s *fromSource[TSource, TResult]) Reset() {
@@ -77,10 +79,20 @@ func (s *fromSource[TSource, TResult]) Reset() {
 // error to the buffer fails it will panic.
 func (s *fromSource[TSource, TResult]) mustGetNext() module.MemSize {
 	index, err := s.getNext()
-	if err != nil {
-		return mustWriteErr(s.instance, err)
+	if err == nil {
+		return index
 	}
-
+	data := []byte(err.Error())
+	// allocate space for the error
+	index, err = s.instance.Alloc(module.TypeIdSize + module.LenSize + int32(len(data)))
+	if err != nil {
+		panic(err)
+	}
+	// write the error starting at the allocated index
+	err = WriteItem(s.instance.Memory(index), module.ErrTypeID, data)
+	if err != nil {
+		panic(err)
+	}
 	return index
 }
 
@@ -90,25 +102,34 @@ func (s *fromSource[TSource, TResult]) getNext() (module.MemSize, error) {
 		return 0, err
 	}
 	if !hasNext {
-		return writeEOS(s.instance)
+		// allocate space for EOS
+		index, err := s.instance.Alloc(module.TypeIdSize)
+		if err != nil {
+			return 0, err
+		}
+		// write EOS to memory
+		err = WriteItem(s.instance.Memory(index), module.EOSTypeID, nil)
+		if err != nil {
+			return 0, err
+		}
+		return index, nil
 	}
 
 	sourceItem, err := s.source.Value()
 	if err != nil {
 		return 0, err
 	}
-
 	value, err := json.Marshal(sourceItem)
 	if err != nil {
 		return 0, err
 	}
-
+	// allocate space for the next item
 	index, err := s.instance.Alloc(module.TypeIdSize + module.LenSize + module.MemSize(len(value)))
 	if err != nil {
 		return 0, err
 	}
-
-	err = WriteItem(module.JSONTypeID, value, s.instance.GetData()[index:])
+	// write the item to memory
+	err = WriteItem(s.instance.Memory(index), module.JSONTypeID, value)
 	if err != nil {
 		return 0, err
 	}
