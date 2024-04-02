@@ -79,20 +79,10 @@ func (s *fromSource[TSource, TResult]) Reset() {
 // error to the buffer fails it will panic.
 func (s *fromSource[TSource, TResult]) mustGetNext() module.MemSize {
 	index, err := s.getNext()
-	if err == nil {
-		return index
-	}
-	data := []byte(err.Error())
-	// allocate space for the error
-	index, err = s.instance.Alloc(module.TypeIdSize + module.LenSize + int32(len(data)))
 	if err != nil {
-		panic(err)
+		return mustWriteErr(s.instance, err)
 	}
-	// write the error starting at the allocated index
-	err = WriteItem(s.instance.Memory(index), module.ErrTypeID, data)
-	if err != nil {
-		panic(err)
-	}
+
 	return index
 }
 
@@ -102,17 +92,7 @@ func (s *fromSource[TSource, TResult]) getNext() (module.MemSize, error) {
 		return 0, err
 	}
 	if !hasNext {
-		// allocate space for EOS
-		index, err := s.instance.Alloc(module.TypeIdSize)
-		if err != nil {
-			return 0, err
-		}
-		// write EOS to memory
-		err = WriteItem(s.instance.Memory(index), module.EOSTypeID, nil)
-		if err != nil {
-			return 0, err
-		}
-		return index, nil
+		return writeEOS(s.instance)
 	}
 
 	sourceItem, err := s.source.Value()

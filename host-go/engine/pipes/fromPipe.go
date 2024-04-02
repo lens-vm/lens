@@ -77,20 +77,10 @@ func (p *fromPipe[TSource, TResult]) Reset() {
 // error to the buffer fails it will panic.
 func (p *fromPipe[TSource, TResult]) mustGetNext() module.MemSize {
 	index, err := p.getNext()
-	if err == nil {
-		return index
-	}
-	data := []byte(err.Error())
-	// allocate space for the error
-	index, err = p.instance.Alloc(module.TypeIdSize + module.LenSize + int32(len(data)))
 	if err != nil {
-		panic(err)
+		return mustWriteErr(p.instance, err)
 	}
-	// write the error starting at the allocated index
-	err = WriteItem(p.instance.Memory(index), module.ErrTypeID, data)
-	if err != nil {
-		panic(err)
-	}
+
 	return index
 }
 
@@ -100,17 +90,7 @@ func (p *fromPipe[TSource, TResult]) getNext() (module.MemSize, error) {
 		return 0, err
 	}
 	if !hasNext {
-		// allocate space for EOS
-		index, err := p.instance.Alloc(module.TypeIdSize)
-		if err != nil {
-			return 0, err
-		}
-		// write EOS to memory
-		err = WriteItem(p.instance.Memory(index), module.EOSTypeID, nil)
-		if err != nil {
-			return 0, err
-		}
-		return index, nil
+		return writeEOS(p.instance)
 	}
 
 	value, err := p.source.Bytes()
