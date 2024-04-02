@@ -20,7 +20,7 @@ func TestWasm32PipelineWithSharedState(t *testing.T) {
 	}
 	runtime := newRuntime()
 
-	module, err := engine.NewModule(runtime, modules.RustWasm32Counter)
+	module, err := engine.NewModule(runtime, modules.WasmPath5)
 	if err != nil {
 		t.Error(err)
 	}

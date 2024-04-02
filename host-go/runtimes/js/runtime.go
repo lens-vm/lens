@@ -37,7 +37,6 @@ func (rt *wRuntime) NewModule(wasmBytes []byte) (module.Module, error) {
 
 	// https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/compile_static
 	promise := rt.webAssembly.Call("compile", wasmBytesJS)
-
 	results, err := await(promise)
 	if err != nil {
 		return nil, err
@@ -80,17 +79,17 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 	// https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/Memory
 	memory := exports.Get("memory")
 	if memory.Type() != js.TypeObject {
-		return module.Instance{}, errors.New("Export 'memory' does not exist")
+		return module.Instance{}, errors.New(fmt.Sprintf("Export `%s` does not exist", "memory"))
 	}
 
 	alloc := exports.Get("alloc")
 	if alloc.Type() != js.TypeFunction {
-		return module.Instance{}, errors.New("Export 'alloc' does not exist")
+		return module.Instance{}, errors.New(fmt.Sprintf("Export `%s` does not exist", "alloc"))
 	}
 
 	transform := exports.Get(functionName)
 	if transform.Type() != js.TypeFunction {
-		return module.Instance{}, errors.New(fmt.Sprintf("Export '%s' does not exist", functionName))
+		return module.Instance{}, errors.New(fmt.Sprintf("Export `%s` does not exist", functionName))
 	}
 
 	params := map[string]any{}
@@ -105,7 +104,7 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 	if len(params) > 0 {
 		setParam := exports.Get("set_param")
 		if setParam.Type() != js.TypeFunction {
-			return module.Instance{}, errors.New("Export 'set_param' does not exist")
+			return module.Instance{}, errors.New(fmt.Sprintf("Export `%s` does not exist", "set_param"))
 		}
 
 		sourceBytes, err := json.Marshal(params)
@@ -135,7 +134,6 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 
 	return module.Instance{
 		Alloc: func(u module.MemSize) (module.MemSize, error) {
-			// result := instance.Get("exports").Call("alloc", int32(u))
 			result := alloc.Invoke(int32(u))
 			return module.MemSize(result.Int()), nil
 		},

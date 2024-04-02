@@ -5,6 +5,13 @@
 package engine
 
 import (
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"os"
+	"strings"
+
 	"github.com/lens-vm/lens/host-go/engine/module"
 	"github.com/lens-vm/lens/host-go/engine/pipes"
 	"github.com/sourcenetwork/immutable/enumerable"
@@ -44,8 +51,35 @@ func append[TSource any, TResult any](src enumerable.Enumerable[TSource], instan
 // NewModule instantiates a new module from the WAT code at the given path.
 //
 // This is a fairly expensive operation.
-func NewModule(runtime module.Runtime, content []byte) (module.Module, error) {
-	return runtime.NewModule(content)
+func NewModule(runtime module.Runtime, path string) (module.Module, error) {
+	parsed, err := url.Parse(path)
+	if err != nil {
+		return nil, err
+	}
+
+	switch strings.ToLower(parsed.Scheme) {
+	case "http", "https":
+		res, err := http.Get(path)
+		if err != nil {
+			return nil, err
+		}
+		defer res.Body.Close()
+
+		content, err := io.ReadAll(res.Body)
+		if err != nil {
+			return nil, err
+		}
+		return runtime.NewModule(content)
+
+	case "file":
+		content, err := os.ReadFile(parsed.Path)
+		if err != nil {
+			return nil, err
+		}
+		return runtime.NewModule(content)
+	}
+
+	return nil, fmt.Errorf("invalid module url: %s", path)
 }
 
 func NewInstance(module module.Module, paramSets ...map[string]any) (module.Instance, error) {

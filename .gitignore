@@ -22,3 +22,4 @@ tests/modules/rust_wasm32_normalize/pkg
 sdk-rust/target
 sdk-rust/Cargo.lock
 host-go/build/host-go.exe
+.DS_Store

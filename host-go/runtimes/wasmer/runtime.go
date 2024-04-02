@@ -8,6 +8,7 @@ package wasmer
 
 import (
 	"encoding/json"
+	"io"
 
 	"github.com/lens-vm/lens/host-go/engine/module"
 	"github.com/lens-vm/lens/host-go/engine/pipes"
@@ -116,7 +117,8 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 			return module.Instance{}, err
 		}
 
-		err = pipes.WriteItem(module.JSONTypeID, sourceBytes, memory.Data()[index.(module.MemSize):])
+		mem := module.NewSliceReadWriter(memory.Data(), index.(module.MemSize))
+		err = pipes.WriteItem(mem, module.JSONTypeID, sourceBytes)
 		if err != nil {
 			return module.Instance{}, err
 		}
@@ -128,7 +130,8 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 
 		// The `set_param` wasm function may error, in which case the error needs to be retrieved
 		// from memory using `pipes.GetItem`.
-		_, err = pipes.GetItem(memory.Data(), r.(module.MemSize))
+		mem = module.NewSliceReadWriter(memory.Data(), r.(module.MemSize))
+		_, err = pipes.ReadItem(mem)
 		if err != nil {
 			return module.Instance{}, err
 		}
@@ -153,7 +156,9 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 			}
 			return r.(module.MemSize), err
 		},
-		GetData: memory.Data,
+		Memory: func(offset int32) io.ReadWriter {
+			return module.NewSliceReadWriter(memory.Data(), offset)
+		},
 		OwnedBy: instance,
 	}, nil
 }

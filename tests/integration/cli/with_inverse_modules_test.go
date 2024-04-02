@@ -5,7 +5,6 @@
 package integration
 
 import (
-	"encoding/base64"
 	"testing"
 
 	"github.com/lens-vm/lens/tests/modules"
@@ -24,14 +23,14 @@ func TestInverseWithModules(t *testing.T) {
 			{
 				"lenses": [
 					{
-						"content": "` + base64.StdEncoding.EncodeToString(modules.RustWasm32Simple2) + `"
+						"path": "` + modules.WasmPath2 + `"
 					},
 					{
-						"content": "` + base64.StdEncoding.EncodeToString(modules.RustWasm32Simple2) + `",
+						"path": "` + modules.WasmPath2 + `",
 						"inverse": true
 					},
 					{
-						"content": "` + base64.StdEncoding.EncodeToString(modules.RustWasm32Simple2) + `",
+						"path": "` + modules.WasmPath2 + `",
 						"inverse": true
 					}
 				]

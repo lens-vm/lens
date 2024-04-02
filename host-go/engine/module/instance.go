@@ -30,3 +30,24 @@ type Instance struct {
 	// of this Module may be garbage collected prematurely.
 	OwnedBy any
 }
+
+type SliceReadWriter struct {
+	data   []byte
+	offset int32
+}
+
+func NewSliceReadWriter(data []byte, offset int32) *SliceReadWriter {
+	return &SliceReadWriter{data: data, offset: offset}
+}
+
+func (s *SliceReadWriter) Read(dst []byte) (int, error) {
+	n := copy(dst, s.data[s.offset:])
+	s.offset = s.offset + int32(n)
+	return n, nil
+}
+
+func (s *SliceReadWriter) Write(src []byte) (int, error) {
+	n := copy(s.data[s.offset:], src)
+	s.offset = s.offset + int32(n)
+	return n, nil
+}

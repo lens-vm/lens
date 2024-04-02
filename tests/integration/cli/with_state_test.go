@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"encoding/base64"
 	"testing"
 
 	"github.com/lens-vm/lens/tests/modules"
@@ -20,7 +19,7 @@ func TestWithState(t *testing.T) {
 			{
 				"lenses": [
 					{
-						"content": "` + base64.StdEncoding.EncodeToString(modules.RustWasm32Counter) + `"
+						"path": "` + modules.WasmPath5 + `"
 					}
 				]
 			}`,
@@ -68,13 +67,13 @@ func TestWithStateDuplicated(t *testing.T) {
 			{
 				"lenses": [
 					{
-						"content": "` + base64.StdEncoding.EncodeToString(modules.RustWasm32Counter) + `"
+						"path": "` + modules.WasmPath5 + `"
 					},
 					{
-						"content": "` + base64.StdEncoding.EncodeToString(modules.RustWasm32Counter) + `"
+						"path": "` + modules.WasmPath5 + `"
 					},
 					{
-						"content": "` + base64.StdEncoding.EncodeToString(modules.RustWasm32Counter) + `"
+						"path": "` + modules.WasmPath5 + `"
 					}
 				]
 			}`,

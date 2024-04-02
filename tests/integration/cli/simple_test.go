@@ -5,7 +5,6 @@
 package integration
 
 import (
-	"encoding/base64"
 	"testing"
 
 	"github.com/lens-vm/lens/tests/modules"
@@ -29,7 +28,7 @@ func TestSimple(t *testing.T) {
 			{
 				"lenses": [
 					{
-						"content": "` + base64.StdEncoding.EncodeToString(modules.RustWasm32Simple) + `"
+						"path": "` + modules.WasmPath1 + `"
 					}
 				]
 			}`,
@@ -128,7 +127,7 @@ func TestSimpleWithEmptyItem(t *testing.T) {
 			{
 				"lenses": [
 					{
-						"content": "` + base64.StdEncoding.EncodeToString(modules.RustWasm32Simple) + `"
+						"path": "` + modules.WasmPath1 + `"
 					}
 				]
 			}`,
@@ -176,7 +175,7 @@ func TestSimpleWithNilItem(t *testing.T) {
 			{
 				"lenses": [
 					{
-						"content": "` + base64.StdEncoding.EncodeToString(modules.RustWasm32Simple) + `"
+						"path": "` + modules.WasmPath1 + `"
 					}
 				]
 			}`,
