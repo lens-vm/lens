@@ -32,4 +32,5 @@ test\:scripts:
 
 .PHONY: test\:js
 test\:js:
+	$(MAKE) deps:test-js
 	$(MAKE) --no-print-directory -C ./host-go test:js
