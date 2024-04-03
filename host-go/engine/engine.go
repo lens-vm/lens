@@ -77,9 +77,10 @@ func NewModule(runtime module.Runtime, path string) (module.Module, error) {
 			return nil, err
 		}
 		return runtime.NewModule(content)
-	}
 
-	return nil, fmt.Errorf("invalid module url: %s", path)
+	default:
+		return nil, fmt.Errorf("invalid module path: %s", path)
+	}
 }
 
 func NewInstance(module module.Module, paramSets ...map[string]any) (module.Instance, error) {

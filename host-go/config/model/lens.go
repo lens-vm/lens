@@ -16,15 +16,15 @@ type Lens struct {
 
 type LensModule struct {
 	// The path to the wasm binary containing the lens transform that you wish to be applied.
-	Path string `json:"path"`
+	Path string
 
 	// If true, the module will be inversed.
 	//
 	// This may result in an error if the module does not provide an inverse function.
-	Inverse bool `json:"inverse"`
+	Inverse bool
 
 	// Any additional parameters that you wish to be passed to the lens transform.
 	//
 	// The lens module must expose a `set_param` function if values are provided here.
-	Arguments map[string]any `json:"arguments"`
+	Arguments map[string]any
 }

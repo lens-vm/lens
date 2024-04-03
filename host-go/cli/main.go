@@ -6,31 +6,29 @@ package main
 
 import (
 	"encoding/json"
+	"io"
 	"os"
 
 	"github.com/lens-vm/lens/host-go/config"
-	"github.com/lens-vm/lens/host-go/config/model"
-
 	"github.com/sourcenetwork/immutable/enumerable"
 )
 
 func main() {
-	dec := json.NewDecoder(os.Stdin)
+	lensFilePath := os.Args[1]
 
-	var lensConfig model.Lens
-	err := dec.Decode(&lensConfig)
+	dataBytes, err := io.ReadAll(os.Stdin)
 	if err != nil {
 		panic(err)
 	}
 
 	var data []map[string]any
-	err = dec.Decode(&data)
+	err = json.Unmarshal(dataBytes, &data)
 	if err != nil {
 		panic(err)
 	}
 
 	src := enumerable.New(data)
-	result, err := config.Load[map[string]any, map[string]any](lensConfig, src)
+	result, err := config.LoadFromFile[map[string]any, map[string]any](lensFilePath, src)
 	if err != nil {
 		panic(err)
 	}

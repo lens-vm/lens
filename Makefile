@@ -9,6 +9,12 @@ deps\:test:
 	$(MAKE) -C ./host-go build
 	$(MAKE) -C ./tests/modules build
 
+.PHONY: deps\:test-js
+deps\:test-js:
+	go install github.com/agnivade/wasmbrowsertest@latest
+	$(MAKE) -C ./host-go build
+	$(MAKE) -C ./tests/modules build
+
 .PHONY: test
 test:
 	$(MAKE) deps:test
@@ -23,3 +29,7 @@ test\:ci:
 .PHONY: test\:scripts
 test\:scripts:
 	@$(MAKE) -C ./tools/scripts/ test
+
+.PHONY: test\:js
+test\:js:
+	$(MAKE) --no-print-directory -C ./host-go test:js
