@@ -7,7 +7,6 @@ package pipes
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
 	"io"
 
 	"github.com/lens-vm/lens/host-go/engine/module"
@@ -30,16 +29,16 @@ func ReadTypeId(r io.Reader) (module.TypeIdType, error) {
 	return typeId, nil
 }
 
-// ReadItem returns the bytes of the next item from the given reader.
-func ReadItem(r io.Reader) ([]byte, error) {
+// ReadItem returns the type id and bytes of the next item from the given reader.
+func ReadItem(r io.Reader) (module.TypeIdType, []byte, error) {
 	typeId, err := ReadTypeId(r)
 	if err != nil {
-		return nil, err
+		return typeId, nil, err
 	}
 
 	// type is nil so nothing else to read
 	if typeId == module.NilTypeID {
-		return nil, nil
+		return typeId, nil, nil
 	}
 
 	lenBuffer := make([]byte, module.LenSize)
@@ -48,25 +47,21 @@ func ReadItem(r io.Reader) ([]byte, error) {
 	// read the item length
 	_, err = r.Read(lenBuffer)
 	if err != nil {
-		return nil, err
+		return typeId, nil, err
 	}
 	var len module.LenType
 	err = binary.Read(lenReader, module.LenByteOrder, &len)
 	if err != nil {
-		return nil, err
+		return typeId, nil, err
 	}
 
 	// read the item bytes
 	data := make([]byte, len)
 	_, err = r.Read(data)
 	if err != nil {
-		return nil, err
+		return typeId, nil, err
 	}
-
-	if typeId.IsError() {
-		return nil, errors.New(string(data))
-	}
-	return data, nil
+	return typeId, data, nil
 }
 
 func WriteItem(w io.Writer, id module.TypeIdType, data []byte) error {

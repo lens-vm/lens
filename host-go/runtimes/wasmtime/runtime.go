@@ -126,7 +126,10 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 		// The `set_param` wasm function may error, in which case the error needs to be retrieved
 		// from memory using `pipes.GetItem`.
 		mem = module.NewSliceReadWriter(memory.UnsafeData(m.rt.store), r.(module.MemSize))
-		_, err = pipes.ReadItem(mem)
+		id, data, err := pipes.ReadItem(mem)
+		if id.IsError() {
+			return module.Instance{}, errors.New(string(data))
+		}
 		if err != nil {
 			return module.Instance{}, err
 		}

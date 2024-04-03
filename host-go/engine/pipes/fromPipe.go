@@ -5,7 +5,9 @@
 package pipes
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 
 	"github.com/lens-vm/lens/host-go/engine/module"
 )
@@ -47,23 +49,32 @@ func (p *fromPipe[TSource, TResult]) Next() (bool, error) {
 }
 
 func (p *fromPipe[TSource, TResult]) Value() (TResult, error) {
-	var t TResult
+	var result TResult
 
-	item, err := ReadItem(p.instance.Memory(p.currentIndex))
-	if err != nil || item == nil {
-		return t, err
-	}
-
-	result := &t
-	err = json.Unmarshal(item, result)
+	id, data, err := ReadItem(p.instance.Memory(p.currentIndex))
 	if err != nil {
-		return t, err
+		return result, err
 	}
-	return *result, nil
+	if id.IsError() {
+		return result, errors.New(string(data))
+	}
+	if id != module.JSONTypeID {
+		return result, nil
+	}
+	err = json.Unmarshal(data, &result)
+	return result, err
 }
 
 func (p *fromPipe[TSource, TResult]) Bytes() ([]byte, error) {
-	return ReadItem(p.instance.Memory(p.currentIndex))
+	id, data, err := ReadItem(p.instance.Memory(p.currentIndex))
+	if err != nil {
+		return nil, err
+	}
+	var out bytes.Buffer
+	if err := WriteItem(&out, id, data); err != nil {
+		return nil, err
+	}
+	return out.Bytes(), nil
 }
 
 func (p *fromPipe[TSource, TResult]) Reset() {
@@ -98,12 +109,12 @@ func (p *fromPipe[TSource, TResult]) getNext() (module.MemSize, error) {
 		return 0, err
 	}
 	// allocate space for the next item
-	index, err := p.instance.Alloc(module.TypeIdSize + module.LenSize + module.MemSize(len(value)))
+	index, err := p.instance.Alloc(module.MemSize(len(value)))
 	if err != nil {
 		return 0, err
 	}
 	// write the item to memory
-	err = WriteItem(p.instance.Memory(index), module.JSONTypeID, value)
+	_, err = p.instance.Memory(index).Write(value)
 	if err != nil {
 		return 0, err
 	}

@@ -5,7 +5,9 @@
 package pipes
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 
 	"github.com/lens-vm/lens/host-go/engine/module"
 	"github.com/sourcenetwork/immutable/enumerable"
@@ -48,24 +50,32 @@ func (s *fromSource[TSource, TResult]) Next() (bool, error) {
 }
 
 func (s *fromSource[TSource, TResult]) Value() (TResult, error) {
-	var t TResult
+	var result TResult
 
-	item, err := ReadItem(s.instance.Memory(s.currentIndex))
-	if err != nil || item == nil {
-		return t, err
-	}
-
-	result := &t
-	err = json.Unmarshal(item, result)
+	id, data, err := ReadItem(s.instance.Memory(s.currentIndex))
 	if err != nil {
-		return t, err
+		return result, err
 	}
-
-	return *result, nil
+	if id.IsError() {
+		return result, errors.New(string(data))
+	}
+	if id != module.JSONTypeID {
+		return result, nil
+	}
+	err = json.Unmarshal(data, &result)
+	return result, err
 }
 
 func (s *fromSource[TSource, TResult]) Bytes() ([]byte, error) {
-	return ReadItem(s.instance.Memory(s.currentIndex))
+	id, data, err := ReadItem(s.instance.Memory(s.currentIndex))
+	if err != nil {
+		return nil, err
+	}
+	var out bytes.Buffer
+	if err := WriteItem(&out, id, data); err != nil {
+		return nil, err
+	}
+	return out.Bytes(), nil
 }
 
 func (s *fromSource[TSource, TResult]) Reset() {
