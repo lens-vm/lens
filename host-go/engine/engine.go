@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 
@@ -56,8 +57,13 @@ func append[TSource any, TResult any](src enumerable.Enumerable[TSource], instan
 //
 // This is a fairly expensive operation.
 func NewModule(runtime module.Runtime, path string) (module.Module, error) {
-	switch {
-	case strings.HasPrefix(path, "http:"), strings.HasPrefix(path, "https:"):
+	parsed, err := url.Parse(path)
+	if err != nil {
+		return nil, err
+	}
+
+	switch strings.ToLower(parsed.Scheme) {
+	case "http", "https":
 		res, err := http.Get(path)
 		if err != nil {
 			return nil, err
@@ -70,8 +76,8 @@ func NewModule(runtime module.Runtime, path string) (module.Module, error) {
 		}
 		return runtime.NewModule(content)
 
-	case strings.HasPrefix(path, "file:"):
-		content, err := os.ReadFile(path[5:])
+	case "file":
+		content, err := os.ReadFile(parsed.Path)
 		if err != nil {
 			return nil, err
 		}
