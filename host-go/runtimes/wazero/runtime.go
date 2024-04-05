@@ -2,6 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+//go:build !js
+
 package wazero
 
 import (
@@ -9,9 +11,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"math"
 
 	"github.com/lens-vm/lens/host-go/engine/module"
 	"github.com/lens-vm/lens/host-go/engine/pipes"
+
 	"github.com/tetratelabs/wazero"
 )
 
@@ -107,21 +112,26 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 			return module.Instance{}, err
 		}
 
-		data, _ := memory.Read(0, memory.Size())
-		err = pipes.WriteItem(module.JSONTypeID, sourceBytes, data[index[0]:])
+		mem := newMemory(memory)
+		w := io.NewOffsetWriter(mem, int64(index[0]))
+
+		err = pipes.WriteItem(w, module.JSONTypeID, sourceBytes)
 		if err != nil {
 			return module.Instance{}, err
 		}
 
-		r, err := setParam.Call(ctx, index[0])
+		index, err = setParam.Call(ctx, index[0])
 		if err != nil {
 			return module.Instance{}, err
 		}
+		r := io.NewSectionReader(mem, int64(index[0]), math.MaxInt64)
 
-		data, _ = memory.Read(0, memory.Size())
 		// The `set_param` wasm function may error, in which case the error needs to be retrieved
 		// from memory using `pipes.GetItem`.
-		_, err = pipes.GetItem(data, module.MemSize(r[0]))
+		id, data, err := pipes.ReadItem(r)
+		if id.IsError() {
+			return module.Instance{}, errors.New(string(data))
+		}
 		if err != nil {
 			return module.Instance{}, err
 		}
@@ -146,9 +156,8 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 			}
 			return module.MemSize(r[0]), nil
 		},
-		GetData: func() []byte {
-			data, _ := memory.Read(0, memory.Size())
-			return data
+		Memory: func() module.Memory {
+			return newMemory(memory)
 		},
 		OwnedBy: instance,
 	}, nil

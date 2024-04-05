@@ -5,7 +5,12 @@
 package engine
 
 import (
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
 	"os"
+	"strings"
 
 	"github.com/lens-vm/lens/host-go/engine/module"
 	"github.com/lens-vm/lens/host-go/engine/pipes"
@@ -45,14 +50,42 @@ func append[TSource any, TResult any](src enumerable.Enumerable[TSource], instan
 
 // NewModule instantiates a new module from the WAT code at the given path.
 //
+// The path must have one of the following prefixes:
+// - "file:" local filesystem file
+// - "http:" remote file served over http
+// - "https:" remote file served over https
+//
 // This is a fairly expensive operation.
 func NewModule(runtime module.Runtime, path string) (module.Module, error) {
-	content, err := os.ReadFile(path)
+	parsed, err := url.Parse(path)
 	if err != nil {
 		return nil, err
 	}
 
-	return runtime.NewModule(content)
+	switch strings.ToLower(parsed.Scheme) {
+	case "http", "https":
+		res, err := http.Get(path)
+		if err != nil {
+			return nil, err
+		}
+		defer res.Body.Close()
+
+		content, err := io.ReadAll(res.Body)
+		if err != nil {
+			return nil, err
+		}
+		return runtime.NewModule(content)
+
+	case "file":
+		content, err := os.ReadFile(parsed.Path)
+		if err != nil {
+			return nil, err
+		}
+		return runtime.NewModule(content)
+
+	default:
+		return nil, fmt.Errorf("invalid module path: %s", path)
+	}
 }
 
 func NewInstance(module module.Module, paramSets ...map[string]any) (module.Instance, error) {

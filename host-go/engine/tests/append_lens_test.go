@@ -120,8 +120,8 @@ func TestAppendLensWithoutWasm(t *testing.T) {
 
 				return module.MemSize(arbitraryReturnIndex), nil
 			},
-			GetData: func() []byte {
-				return memory
+			Memory: func() module.Memory {
+				return module.NewBytesMemory(memory)
 			},
 		},
 	)

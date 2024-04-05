@@ -7,85 +7,97 @@ package pipes
 import (
 	"bytes"
 	"encoding/binary"
-	"errors"
+	"io"
 
 	"github.com/lens-vm/lens/host-go/engine/module"
 )
 
-// GetItem returns the item at the given index.  This includes the length specifier.
-func GetItem(src []byte, startIndex module.MemSize) ([]byte, error) {
+// ReadTypeId returns the type id of the next item from the given reader.
+func ReadTypeId(r io.Reader) (module.TypeIdType, error) {
 	typeBuffer := make([]byte, module.TypeIdSize)
-	copy(typeBuffer, src[startIndex:startIndex+module.TypeIdSize])
-	var typeId module.TypeIdType
-	reader := bytes.NewReader(typeBuffer)
-	err := binary.Read(reader, module.TypeIdByteOrder, &typeId)
+	typeReader := bytes.NewReader(typeBuffer)
+
+	_, err := r.Read(typeBuffer)
 	if err != nil {
-		return nil, err
+		return 0, err
+	}
+	var typeId module.TypeIdType
+	err = binary.Read(typeReader, module.TypeIdByteOrder, &typeId)
+	if err != nil {
+		return 0, err
+	}
+	return typeId, nil
+}
+
+// ReadItem returns the type id and bytes of the next item from the given reader.
+func ReadItem(r io.Reader) (module.TypeIdType, []byte, error) {
+	typeId, err := ReadTypeId(r)
+	if err != nil {
+		return typeId, nil, err
 	}
 
+	// type is nil so nothing else to read
 	if typeId == module.NilTypeID {
-		return nil, nil
+		return typeId, nil, nil
 	}
 
 	lenBuffer := make([]byte, module.LenSize)
-	copy(lenBuffer, src[startIndex+module.TypeIdSize:startIndex+module.TypeIdSize+module.LenSize])
-	var len module.LenType
-	reader = bytes.NewReader(lenBuffer)
-	err = binary.Read(reader, module.LenByteOrder, &len)
+	lenReader := bytes.NewReader(lenBuffer)
+
+	// read the item length
+	_, err = r.Read(lenBuffer)
 	if err != nil {
-		return nil, err
+		return typeId, nil, err
+	}
+	var len module.LenType
+	err = binary.Read(lenReader, module.LenByteOrder, &len)
+	if err != nil {
+		return typeId, nil, err
 	}
 
-	if typeId.IsError() {
-		return nil, errors.New(
-			string(
-				src[startIndex+module.TypeIdSize+module.LenSize : startIndex+module.TypeIdSize+module.MemSize(len)+module.LenSize],
-			),
-		)
+	// read the item bytes
+	data := make([]byte, len)
+	_, err = r.Read(data)
+	if err != nil {
+		return typeId, nil, err
 	}
-
-	// todo - the end index of this is untested, as it will only affect performance atm if it is longer than desired
-	// unless it overwrites adjacent stuff
-	return src[startIndex : startIndex+module.TypeIdSize+module.MemSize(len)+module.LenSize], nil
+	return typeId, data, nil
 }
 
-// WriteItem calculates the length specifier for the given source object and then writes both specifier
-// and item to the destination.
-func WriteItem(typeId module.TypeIdType, src []byte, dst []byte) error {
-	typeWriter := bytes.NewBuffer([]byte{})
-	err := binary.Write(typeWriter, module.TypeIdByteOrder, typeId)
+func WriteItem(w io.Writer, id module.TypeIdType, data []byte) error {
+	// write the item type id
+	err := binary.Write(w, module.TypeIdByteOrder, id)
 	if err != nil {
 		return err
 	}
-	copy(dst, typeWriter.Bytes())
 
-	switch typeId {
-	case module.EOSTypeID:
-		// no-op - End of stream messages have no value component that needs writing
-
-	default:
-		len := module.LenType(len(src))
-		lenWriter := bytes.NewBuffer([]byte{})
-		err = binary.Write(lenWriter, module.LenByteOrder, len)
-		if err != nil {
-			return err
-		}
-
-		copy(dst[module.TypeIdSize:], lenWriter.Bytes())
-		copy(dst[module.TypeIdSize+module.LenSize:], src)
+	// end of stream messages have no value component that needs writing
+	if id.IsEOS() {
+		return nil
 	}
 
-	return nil
+	// write the item length
+	err = binary.Write(w, module.LenByteOrder, module.LenType(len(data)))
+	if err != nil {
+		return err
+	}
+
+	// write the item bytes
+	_, err = w.Write(data)
+	return err
 }
 
 // writeEOS writes the end-of-stream type id to the module memory and returns its location.
-func writeEOS(m module.Instance) (module.MemSize, error) {
-	index, err := m.Alloc(module.TypeIdSize)
+func writeEOS(instance module.Instance) (module.MemSize, error) {
+	index, err := instance.Alloc(module.TypeIdSize)
 	if err != nil {
 		return 0, err
 	}
 
-	err = WriteItem(module.EOSTypeID, []byte{}, m.GetData()[index:])
+	m := instance.Memory()
+	w := io.NewOffsetWriter(m, int64(index))
+
+	err = WriteItem(w, module.EOSTypeID, []byte{})
 	if err != nil {
 		return 0, err
 	}
@@ -96,15 +108,18 @@ func writeEOS(m module.Instance) (module.MemSize, error) {
 // mustWriteErr writes the given error to the given module's memory, returning its location.
 //
 // Will panic if an error is generated during writing.
-func mustWriteErr(m module.Instance, err error) module.MemSize {
+func mustWriteErr(instance module.Instance, err error) module.MemSize {
 	errText := err.Error()
 
-	index, err := m.Alloc(module.TypeIdSize + module.LenSize + int32(len(errText)))
+	index, err := instance.Alloc(module.TypeIdSize + module.LenSize + int32(len(errText)))
 	if err != nil {
 		panic(err)
 	}
 
-	err = WriteItem(module.ErrTypeID, []byte(errText), m.GetData()[index:])
+	m := instance.Memory()
+	w := io.NewOffsetWriter(m, int64(index))
+
+	err = WriteItem(w, module.ErrTypeID, []byte(errText))
 	if err != nil {
 		panic(err)
 	}

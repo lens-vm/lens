@@ -5,7 +5,11 @@
 package pipes
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
+	"io"
+	"math"
 
 	"github.com/lens-vm/lens/host-go/engine/module"
 	"github.com/sourcenetwork/immutable/enumerable"
@@ -36,7 +40,14 @@ func (s *fromSource[TSource, TResult]) Next() (bool, error) {
 		return false, err
 	}
 
-	if module.TypeIdType(s.instance.GetData()[index]).IsEOS() {
+	m := s.instance.Memory()
+	r := io.NewSectionReader(m, int64(index), math.MaxInt64)
+
+	typeId, err := ReadTypeId(r)
+	if err != nil {
+		return false, err
+	}
+	if typeId.IsEOS() {
 		return false, nil
 	}
 
@@ -45,25 +56,38 @@ func (s *fromSource[TSource, TResult]) Next() (bool, error) {
 }
 
 func (s *fromSource[TSource, TResult]) Value() (TResult, error) {
-	var t TResult
+	var result TResult
 
-	item, err := GetItem(s.instance.GetData(), s.currentIndex)
-	if err != nil || item == nil {
-		return t, err
-	}
-	jsonBytes := item[module.TypeIdSize+module.LenSize:]
+	m := s.instance.Memory()
+	r := io.NewSectionReader(m, int64(s.currentIndex), math.MaxInt64)
 
-	result := &t
-	err = json.Unmarshal(jsonBytes, result)
+	id, data, err := ReadItem(r)
 	if err != nil {
-		return t, err
+		return result, err
 	}
-
-	return *result, nil
+	if id.IsError() {
+		return result, errors.New(string(data))
+	}
+	if id != module.JSONTypeID {
+		return result, nil
+	}
+	err = json.Unmarshal(data, &result)
+	return result, err
 }
 
 func (s *fromSource[TSource, TResult]) Bytes() ([]byte, error) {
-	return GetItem(s.instance.GetData(), s.currentIndex)
+	m := s.instance.Memory()
+	r := io.NewSectionReader(m, int64(s.currentIndex), math.MaxInt64)
+
+	id, data, err := ReadItem(r)
+	if err != nil {
+		return nil, err
+	}
+	var out bytes.Buffer
+	if err := WriteItem(&out, id, data); err != nil {
+		return nil, err
+	}
+	return out.Bytes(), nil
 }
 
 func (s *fromSource[TSource, TResult]) Reset() {
@@ -97,18 +121,22 @@ func (s *fromSource[TSource, TResult]) getNext() (module.MemSize, error) {
 	if err != nil {
 		return 0, err
 	}
-
 	value, err := json.Marshal(sourceItem)
 	if err != nil {
 		return 0, err
 	}
 
+	// allocate space for the next item
 	index, err := s.instance.Alloc(module.TypeIdSize + module.LenSize + module.MemSize(len(value)))
 	if err != nil {
 		return 0, err
 	}
 
-	err = WriteItem(module.JSONTypeID, value, s.instance.GetData()[index:])
+	m := s.instance.Memory()
+	w := io.NewOffsetWriter(m, int64(index))
+
+	// write the item to memory
+	err = WriteItem(w, module.JSONTypeID, value)
 	if err != nil {
 		return 0, err
 	}

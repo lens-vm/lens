@@ -49,5 +49,5 @@ var WasmPath7 string = getPathRelativeToProjectRoot(
 func getPathRelativeToProjectRoot(relativePath string) string {
 	_, filename, _, _ := runtime.Caller(0)
 	root := path.Dir(path.Dir(path.Dir(filename)))
-	return path.Join(root, relativePath)
+	return "file://" + path.Join(root, relativePath)
 }

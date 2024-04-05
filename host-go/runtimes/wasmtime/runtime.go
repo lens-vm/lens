@@ -2,12 +2,16 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+//go:build !js
+
 package wasmtime
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"math"
 
 	"github.com/lens-vm/lens/host-go/engine/module"
 	"github.com/lens-vm/lens/host-go/engine/pipes"
@@ -109,19 +113,26 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 			return module.Instance{}, err
 		}
 
-		err = pipes.WriteItem(module.JSONTypeID, sourceBytes, memory.UnsafeData(m.rt.store)[index.(module.MemSize):])
+		mem := module.NewBytesMemory(memory.UnsafeData(m.rt.store))
+		w := io.NewOffsetWriter(mem, int64(index.(module.MemSize)))
+
+		err = pipes.WriteItem(w, module.JSONTypeID, sourceBytes)
 		if err != nil {
 			return module.Instance{}, err
 		}
 
-		r, err := setParam.Call(m.rt.store, index)
+		index, err = setParam.Call(m.rt.store, index)
 		if err != nil {
 			return module.Instance{}, err
 		}
+		r := io.NewSectionReader(mem, int64(index.(module.MemSize)), math.MaxInt64)
 
 		// The `set_param` wasm function may error, in which case the error needs to be retrieved
 		// from memory using `pipes.GetItem`.
-		_, err = pipes.GetItem(memory.UnsafeData(m.rt.store), r.(module.MemSize))
+		id, data, err := pipes.ReadItem(r)
+		if id.IsError() {
+			return module.Instance{}, errors.New(string(data))
+		}
 		if err != nil {
 			return module.Instance{}, err
 		}
@@ -146,7 +157,9 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 			}
 			return r.(module.MemSize), err
 		},
-		GetData: func() []byte { return memory.UnsafeData(m.rt.store) },
+		Memory: func() module.Memory {
+			return module.NewBytesMemory(memory.UnsafeData(m.rt.store))
+		},
 		OwnedBy: instance,
 	}, nil
 }
