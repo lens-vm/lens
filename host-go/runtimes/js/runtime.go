@@ -25,16 +25,22 @@ type wRuntime struct {
 var _ module.Runtime = (*wRuntime)(nil)
 
 func New() module.Runtime {
+	// Get the global WebAssembly object.
+	//
 	// https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface
 	webAssembly := js.Global().Get("WebAssembly")
 	return &wRuntime{webAssembly}
 }
 
 func (rt *wRuntime) NewModule(wasmBytes []byte) (module.Module, error) {
-	// copy bytes to JavaScript value
+	// Copy bytes from Go to a JavaScript Uint8Array
+	//
+	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array/Uint8Array
 	wasmBytesJS := js.Global().Get("Uint8Array").New(len(wasmBytes))
 	js.CopyBytesToJS(wasmBytesJS, wasmBytes)
 
+	// Compile the WASM bytes into a WebAssembly.Module
+	//
 	// https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/compile_static
 	promise := rt.webAssembly.Call("compile", wasmBytesJS)
 	results, err := await(promise)
@@ -65,6 +71,8 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 		},
 	}
 
+	// Instantiates a WebAssembly.Instance from a WebAssembly.Module with imports.
+	//
 	// https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/instantiate_static
 	promise := m.runtime.webAssembly.Call("instantiate", m.module, importObject)
 	results, err := await(promise)
@@ -73,9 +81,13 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 	}
 	instance := results[0]
 
+	// Get the WebAssembly.Instance.exports object.
+	//
 	// https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/Instance/exports
 	exports := instance.Get("exports")
 
+	// Get the WebAssembly.Memory from the exports.
+	//
 	// https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/Memory
 	memory := exports.Get("memory")
 	if memory.Type() != js.TypeObject {

@@ -10,7 +10,10 @@ type memory struct {
 }
 
 func newMemory(mem api.Memory, offset int32) *memory {
-	return &memory{memory: mem, offset: offset}
+	return &memory{
+		memory: mem,
+		offset: offset,
+	}
 }
 
 func (m *memory) Read(dst []byte) (int, error) {
