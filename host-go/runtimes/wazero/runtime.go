@@ -12,9 +12,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 
 	"github.com/lens-vm/lens/host-go/engine/module"
 	"github.com/lens-vm/lens/host-go/engine/pipes"
+
 	"github.com/tetratelabs/wazero"
 )
 
@@ -110,21 +112,23 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 			return module.Instance{}, err
 		}
 
-		mem := newMemory(memory, int32(index[0]))
-		err = pipes.WriteItem(mem, module.JSONTypeID, sourceBytes)
+		mem := newMemory(memory)
+		w := io.NewOffsetWriter(mem, int64(index[0]))
+
+		err = pipes.WriteItem(w, module.JSONTypeID, sourceBytes)
 		if err != nil {
 			return module.Instance{}, err
 		}
 
-		r, err := setParam.Call(ctx, index[0])
+		index, err = setParam.Call(ctx, index[0])
 		if err != nil {
 			return module.Instance{}, err
 		}
+		r := io.NewSectionReader(mem, int64(index[0]), math.MaxInt64)
 
 		// The `set_param` wasm function may error, in which case the error needs to be retrieved
 		// from memory using `pipes.GetItem`.
-		mem = newMemory(memory, int32(r[0]))
-		id, data, err := pipes.ReadItem(mem)
+		id, data, err := pipes.ReadItem(r)
 		if id.IsError() {
 			return module.Instance{}, errors.New(string(data))
 		}
@@ -152,8 +156,8 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 			}
 			return module.MemSize(r[0]), nil
 		},
-		Memory: func(offset int32) io.ReadWriter {
-			return newMemory(memory, offset)
+		Memory: func() module.Memory {
+			return newMemory(memory)
 		},
 		OwnedBy: instance,
 	}, nil

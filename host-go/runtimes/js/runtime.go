@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"sync"
 	"syscall/js"
 
@@ -126,19 +127,21 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 
 		// allocate memory to write to
 		index := alloc.Invoke(module.TypeIdSize + module.MemSize(len(sourceBytes)) + module.LenSize)
-		mem := newMemory(memory.Get("buffer"), int32(index.Int()))
-		err = pipes.WriteItem(mem, module.JSONTypeID, sourceBytes)
+		mem := newMemory(memory.Get("buffer"))
+		w := io.NewOffsetWriter(mem, int64(index.Int()))
+
+		err = pipes.WriteItem(w, module.JSONTypeID, sourceBytes)
 		if err != nil {
 			return module.Instance{}, err
 		}
 
 		// set param from JavaScript memory
 		index = setParam.Invoke(index)
-		mem = newMemory(memory.Get("buffer"), int32(index.Int()))
+		r := io.NewSectionReader(mem, int64(index.Int()), math.MaxInt64)
 
 		// The `set_param` wasm function may error, in which case the error needs to be retrieved
 		// from memory using `pipes.GetItem`.
-		id, data, err := pipes.ReadItem(mem)
+		id, data, err := pipes.ReadItem(r)
 		if id.IsError() {
 			return module.Instance{}, errors.New(string(data))
 		}
@@ -160,9 +163,9 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 			result := transform.Invoke()
 			return module.MemSize(result.Int()), nil
 		},
-		Memory: func(offset int32) io.ReadWriter {
+		Memory: func() module.Memory {
 			buffer := memory.Get("buffer")
-			return newMemory(buffer, offset)
+			return newMemory(buffer)
 		},
 		OwnedBy: instance,
 	}, nil

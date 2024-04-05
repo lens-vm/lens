@@ -6,25 +6,19 @@ import (
 
 type memory struct {
 	memory api.Memory
-	offset int32
 }
 
-func newMemory(mem api.Memory, offset int32) *memory {
-	return &memory{
-		memory: mem,
-		offset: offset,
-	}
+func newMemory(mem api.Memory) *memory {
+	return &memory{mem}
 }
 
-func (m *memory) Read(dst []byte) (int, error) {
-	out, _ := m.memory.Read(uint32(m.offset), uint32(len(dst)))
+func (m *memory) ReadAt(dst []byte, offset int64) (int, error) {
+	out, _ := m.memory.Read(uint32(offset), uint32(len(dst)))
 	n := copy(dst, out)
-	m.offset = m.offset + int32(n)
 	return n, nil
 }
 
-func (m *memory) Write(src []byte) (int, error) {
-	m.memory.Write(uint32(m.offset), src)
-	m.offset = m.offset + int32(len(src))
+func (m *memory) WriteAt(src []byte, offset int64) (int, error) {
+	m.memory.Write(uint32(offset), src)
 	return len(src), nil
 }

@@ -8,6 +8,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"io"
+	"math"
 
 	"github.com/lens-vm/lens/host-go/engine/module"
 )
@@ -36,7 +38,11 @@ func (p *fromPipe[TSource, TResult]) Next() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	typeId, err := ReadTypeId(p.instance.Memory(index))
+
+	m := p.instance.Memory()
+	r := io.NewSectionReader(m, int64(index), math.MaxInt64)
+
+	typeId, err := ReadTypeId(r)
 	if err != nil {
 		return false, err
 	}
@@ -51,7 +57,10 @@ func (p *fromPipe[TSource, TResult]) Next() (bool, error) {
 func (p *fromPipe[TSource, TResult]) Value() (TResult, error) {
 	var result TResult
 
-	id, data, err := ReadItem(p.instance.Memory(p.currentIndex))
+	mem := p.instance.Memory()
+	r := io.NewSectionReader(mem, int64(p.currentIndex), math.MaxInt64)
+
+	id, data, err := ReadItem(r)
 	if err != nil {
 		return result, err
 	}
@@ -66,7 +75,10 @@ func (p *fromPipe[TSource, TResult]) Value() (TResult, error) {
 }
 
 func (p *fromPipe[TSource, TResult]) Bytes() ([]byte, error) {
-	id, data, err := ReadItem(p.instance.Memory(p.currentIndex))
+	m := p.instance.Memory()
+	r := io.NewSectionReader(m, int64(p.currentIndex), math.MaxInt64)
+
+	id, data, err := ReadItem(r)
 	if err != nil {
 		return nil, err
 	}
@@ -108,13 +120,18 @@ func (p *fromPipe[TSource, TResult]) getNext() (module.MemSize, error) {
 	if err != nil {
 		return 0, err
 	}
+
 	// allocate space for the next item
 	index, err := p.instance.Alloc(module.MemSize(len(value)))
 	if err != nil {
 		return 0, err
 	}
+
+	m := p.instance.Memory()
+	w := io.NewOffsetWriter(m, int64(index))
+
 	// write the item to memory
-	_, err = p.instance.Memory(index).Write(value)
+	_, err = w.Write(value)
 	if err != nil {
 		return 0, err
 	}

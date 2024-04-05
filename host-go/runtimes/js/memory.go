@@ -11,28 +11,22 @@ import (
 )
 
 type memory struct {
-	array  js.Value
-	offset int32
+	array js.Value
 }
 
-func newMemory(buffer js.Value, offset int32) *memory {
+func newMemory(buffer js.Value) *memory {
 	array := js.Global().Get("Uint8Array").New(buffer)
-	return &memory{
-		array:  array,
-		offset: offset,
-	}
+	return &memory{array}
 }
 
-func (m *memory) Read(dst []byte) (int, error) {
-	src := m.array.Call("subarray", m.offset)
+func (m *memory) ReadAt(dst []byte, offset int64) (int, error) {
+	src := m.array.Call("subarray", offset)
 	n := js.CopyBytesToGo(dst, src)
-	m.offset = m.offset + int32(n)
 	return n, nil
 }
 
-func (m *memory) Write(src []byte) (int, error) {
-	dst := m.array.Call("subarray", m.offset)
+func (m *memory) WriteAt(src []byte, offset int64) (int, error) {
+	dst := m.array.Call("subarray", offset)
 	n := js.CopyBytesToJS(dst, src)
-	m.offset = m.offset + int32(n)
 	return n, nil
 }

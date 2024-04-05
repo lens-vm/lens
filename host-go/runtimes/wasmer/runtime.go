@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"math"
 
 	"github.com/lens-vm/lens/host-go/engine/module"
 	"github.com/lens-vm/lens/host-go/engine/pipes"
@@ -118,21 +119,24 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 			return module.Instance{}, err
 		}
 
-		mem := module.NewSliceReadWriter(memory.Data(), index.(module.MemSize))
-		err = pipes.WriteItem(mem, module.JSONTypeID, sourceBytes)
+		mem := module.NewBytesMemory(memory.Data())
+		w := io.NewOffsetWriter(mem, int64(index.(module.MemSize)))
+
+		err = pipes.WriteItem(w, module.JSONTypeID, sourceBytes)
 		if err != nil {
 			return module.Instance{}, err
 		}
 
-		r, err := setParam.Call(index)
+		index, err = setParam.Call(index)
 		if err != nil {
 			return module.Instance{}, err
 		}
+
+		r := io.NewSectionReader(mem, int64(index.(module.MemSize)), math.MaxInt64)
 
 		// The `set_param` wasm function may error, in which case the error needs to be retrieved
 		// from memory using `pipes.GetItem`.
-		mem = module.NewSliceReadWriter(memory.Data(), r.(module.MemSize))
-		id, data, err := pipes.ReadItem(mem)
+		id, data, err := pipes.ReadItem(r)
 		if id.IsError() {
 			return module.Instance{}, errors.New(string(data))
 		}
@@ -160,8 +164,8 @@ func (m *wModule) NewInstance(functionName string, paramSets ...map[string]any) 
 			}
 			return r.(module.MemSize), err
 		},
-		Memory: func(offset int32) io.ReadWriter {
-			return module.NewSliceReadWriter(memory.Data(), offset)
+		Memory: func() module.Memory {
+			return module.NewBytesMemory(memory.Data())
 		},
 		OwnedBy: instance,
 	}, nil

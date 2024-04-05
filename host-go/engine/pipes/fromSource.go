@@ -8,6 +8,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"io"
+	"math"
 
 	"github.com/lens-vm/lens/host-go/engine/module"
 	"github.com/sourcenetwork/immutable/enumerable"
@@ -37,7 +39,11 @@ func (s *fromSource[TSource, TResult]) Next() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	typeId, err := ReadTypeId(s.instance.Memory(index))
+
+	m := s.instance.Memory()
+	r := io.NewSectionReader(m, int64(index), math.MaxInt64)
+
+	typeId, err := ReadTypeId(r)
 	if err != nil {
 		return false, err
 	}
@@ -52,7 +58,10 @@ func (s *fromSource[TSource, TResult]) Next() (bool, error) {
 func (s *fromSource[TSource, TResult]) Value() (TResult, error) {
 	var result TResult
 
-	id, data, err := ReadItem(s.instance.Memory(s.currentIndex))
+	m := s.instance.Memory()
+	r := io.NewSectionReader(m, int64(s.currentIndex), math.MaxInt64)
+
+	id, data, err := ReadItem(r)
 	if err != nil {
 		return result, err
 	}
@@ -67,7 +76,10 @@ func (s *fromSource[TSource, TResult]) Value() (TResult, error) {
 }
 
 func (s *fromSource[TSource, TResult]) Bytes() ([]byte, error) {
-	id, data, err := ReadItem(s.instance.Memory(s.currentIndex))
+	m := s.instance.Memory()
+	r := io.NewSectionReader(m, int64(s.currentIndex), math.MaxInt64)
+
+	id, data, err := ReadItem(r)
 	if err != nil {
 		return nil, err
 	}
@@ -113,13 +125,18 @@ func (s *fromSource[TSource, TResult]) getNext() (module.MemSize, error) {
 	if err != nil {
 		return 0, err
 	}
+
 	// allocate space for the next item
 	index, err := s.instance.Alloc(module.TypeIdSize + module.LenSize + module.MemSize(len(value)))
 	if err != nil {
 		return 0, err
 	}
+
+	m := s.instance.Memory()
+	w := io.NewOffsetWriter(m, int64(index))
+
 	// write the item to memory
-	err = WriteItem(s.instance.Memory(index), module.JSONTypeID, value)
+	err = WriteItem(w, module.JSONTypeID, value)
 	if err != nil {
 		return 0, err
 	}

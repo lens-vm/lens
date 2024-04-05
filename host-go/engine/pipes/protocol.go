@@ -88,13 +88,16 @@ func WriteItem(w io.Writer, id module.TypeIdType, data []byte) error {
 }
 
 // writeEOS writes the end-of-stream type id to the module memory and returns its location.
-func writeEOS(m module.Instance) (module.MemSize, error) {
-	index, err := m.Alloc(module.TypeIdSize)
+func writeEOS(instance module.Instance) (module.MemSize, error) {
+	index, err := instance.Alloc(module.TypeIdSize)
 	if err != nil {
 		return 0, err
 	}
 
-	err = WriteItem(m.Memory(index), module.EOSTypeID, []byte{})
+	m := instance.Memory()
+	w := io.NewOffsetWriter(m, int64(index))
+
+	err = WriteItem(w, module.EOSTypeID, []byte{})
 	if err != nil {
 		return 0, err
 	}
@@ -105,15 +108,18 @@ func writeEOS(m module.Instance) (module.MemSize, error) {
 // mustWriteErr writes the given error to the given module's memory, returning its location.
 //
 // Will panic if an error is generated during writing.
-func mustWriteErr(m module.Instance, err error) module.MemSize {
+func mustWriteErr(instance module.Instance, err error) module.MemSize {
 	errText := err.Error()
 
-	index, err := m.Alloc(module.TypeIdSize + module.LenSize + int32(len(errText)))
+	index, err := instance.Alloc(module.TypeIdSize + module.LenSize + int32(len(errText)))
 	if err != nil {
 		panic(err)
 	}
 
-	err = WriteItem(m.Memory(index), module.ErrTypeID, []byte(errText))
+	m := instance.Memory()
+	w := io.NewOffsetWriter(m, int64(index))
+
+	err = WriteItem(w, module.ErrTypeID, []byte(errText))
 	if err != nil {
 		panic(err)
 	}

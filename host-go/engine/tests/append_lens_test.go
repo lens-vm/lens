@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
-	"io"
 	"math"
 	"testing"
 
@@ -121,8 +120,8 @@ func TestAppendLensWithoutWasm(t *testing.T) {
 
 				return module.MemSize(arbitraryReturnIndex), nil
 			},
-			Memory: func(offset int32) io.ReadWriter {
-				return module.NewSliceReadWriter(memory, offset)
+			Memory: func() module.Memory {
+				return module.NewBytesMemory(memory)
 			},
 		},
 	)
