@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
 
@@ -50,15 +49,15 @@ func append[TSource any, TResult any](src enumerable.Enumerable[TSource], instan
 
 // NewModule instantiates a new module from the WAT code at the given path.
 //
+// The path must have one of the following prefixes:
+// - "file:" local filesystem file
+// - "http:" remote file served over http
+// - "https:" remote file served over https
+//
 // This is a fairly expensive operation.
 func NewModule(runtime module.Runtime, path string) (module.Module, error) {
-	parsed, err := url.Parse(path)
-	if err != nil {
-		return nil, err
-	}
-
-	switch strings.ToLower(parsed.Scheme) {
-	case "http", "https":
+	switch {
+	case strings.HasPrefix(path, "http:"), strings.HasPrefix(path, "https:"):
 		res, err := http.Get(path)
 		if err != nil {
 			return nil, err
@@ -71,8 +70,8 @@ func NewModule(runtime module.Runtime, path string) (module.Module, error) {
 		}
 		return runtime.NewModule(content)
 
-	case "file":
-		content, err := os.ReadFile(parsed.Path)
+	case strings.HasPrefix(path, "file:"):
+		content, err := os.ReadFile(path[5:])
 		if err != nil {
 			return nil, err
 		}
