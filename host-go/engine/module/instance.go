@@ -31,21 +31,26 @@ type Instance struct {
 	OwnedBy any
 }
 
+// SliceReadWriter converts a byte slice into an io.ReadWriter.
 type SliceReadWriter struct {
 	data   []byte
 	offset int32
 }
 
+// NewSliceReadWriter returns a new SliceReadWriter that reads and writes
+// from the given byte slice starting at the given offset.
 func NewSliceReadWriter(data []byte, offset int32) *SliceReadWriter {
 	return &SliceReadWriter{data: data, offset: offset}
 }
 
+// Read implements the io.Reader interface.
 func (s *SliceReadWriter) Read(dst []byte) (int, error) {
 	n := copy(dst, s.data[s.offset:])
 	s.offset = s.offset + int32(n)
 	return n, nil
 }
 
+// Write implements the io.Writer interface.
 func (s *SliceReadWriter) Write(src []byte) (int, error) {
 	n := copy(s.data[s.offset:], src)
 	s.offset = s.offset + int32(n)
