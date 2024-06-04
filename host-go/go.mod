@@ -3,7 +3,7 @@ module github.com/lens-vm/lens/host-go
 go 1.18
 
 require (
-	github.com/bytecodealliance/wasmtime-go/v15 v15.0.0
+	github.com/bytecodealliance/wasmtime-go/v21 v21.0.0
 	github.com/lens-vm/lens/tests/modules v0.0.0-20230720125121-328ae81f5744
 	github.com/sourcenetwork/immutable v0.2.0
 	github.com/stretchr/testify v1.8.1
