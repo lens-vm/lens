@@ -64,3 +64,30 @@ fn try_transform() -> Result<StreamOption<Vec<u8>>, Box<dyn Error>> {
 
 
 }
+
+
+////////////////////////////////////////////////////////////////////////
+
+
+pub extern fn append() {
+}
+
+//todo - we don't want the actual runtime in this space, as it is not wasm friendly
+pub extern fn new_module(runtime: module::Runtime, path: String) -> Result<module::Module> {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	return runtime.NewModule(content)
+}
+
+// todo - params type
+pub extern fn new_instance(module: module::Module, params: Option<HashMap<String, Any>>) -> Result<module::Instance> {
+	return module.NewInstance("transform", paramSets...)
+}
+
+// todo - params type
+pub extern fn new_inverse(module: module::Module, params: Option<HashMap<String, Any>>) -> Result<module::Instance>  {
+	return module.NewInstance("inverse", paramSets...)
+}
