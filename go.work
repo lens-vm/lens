@@ -2,6 +2,10 @@ go 1.18
 
 use (
 	./host-go
+	./host-go/runtimes/js
+	./host-go/runtimes/wasmer
+	./host-go/runtimes/wasmtime
+	./host-go/runtimes/wazero
 	./tests/modules
 	./tests/integration
 )
