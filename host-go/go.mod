@@ -1,6 +1,6 @@
 module github.com/lens-vm/lens/host-go
 
-go 1.18
+go 1.21
 
 require (
 	github.com/bytecodealliance/wasmtime-go/v21 v21.0.0
