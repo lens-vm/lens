@@ -236,7 +236,8 @@ pub fn try_to_mem(type_id: i8, message: &[u8]) -> Result<*mut u8> {
         }
     };
 
-    let result = wtr.into_inner().clone().as_mut_ptr();
+    let mut buffer = wtr.into_inner().clone();
+    let result = buffer.as_mut_ptr();
     Ok(result)
 }
 
