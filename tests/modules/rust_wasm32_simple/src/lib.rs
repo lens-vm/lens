@@ -12,7 +12,7 @@ extern "C" {
     fn next() -> *mut u8;
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct Input {
     #[serde(rename(deserialize = "Name"))]
     pub name: String,

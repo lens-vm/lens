@@ -10,7 +10,7 @@ extern "C" {
     fn next() -> *mut u8;
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Value {
     #[serde(rename = "Id")]
 	pub id: usize,

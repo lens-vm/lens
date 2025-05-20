@@ -162,13 +162,13 @@ pub fn free_transport_buffer(ptr: *mut u8) -> Result<()> {
 ///
 /// This function will return an [Error](error/enum.Error.html) if the data at the given location is not in the expected
 /// format.
-pub fn try_from_mem<TOutput: for<'a> Deserialize<'a>>(ptr: *mut u8) -> Result<StreamOption<TOutput>> {
+pub fn try_from_mem<TOutput: for<'a> Deserialize<'a> + Clone>(ptr: *mut u8) -> Result<StreamOption<TOutput>> {
     let type_vec: Vec<u8> = unsafe {
         Vec::from_raw_parts(ptr, mem::size_of::<i8>(), mem::size_of::<i8>())
     };
 
-    let type_rdr = Cursor::new(type_vec);
-    let mut type_rdr = ManuallyDrop::new(type_rdr);
+    let mut type_rdr = Cursor::new(type_vec.clone());
+    let _ = ManuallyDrop::new(type_vec);
 
     let type_id: i8  = type_rdr.read_i8()?;
     if type_id == NIL_TYPE_ID {
@@ -188,25 +188,23 @@ pub fn try_from_mem<TOutput: for<'a> Deserialize<'a>>(ptr: *mut u8) -> Result<St
         Vec::from_raw_parts(ptr.add(mem::size_of::<i8>()), mem::size_of::<u32>(), mem::size_of::<u32>())
     };
 
-    let len_rdr = Cursor::new(len_vec);
-    let mut len_rdr = ManuallyDrop::new(len_rdr);
+    let mut len_rdr = Cursor::new(len_vec.clone());
+    let _ = ManuallyDrop::new(len_vec);
 
     let len: usize = len_rdr.read_u32::<LittleEndian>()?.try_into()?;
 
     let input_vec: Vec<u8> = unsafe {
         Vec::from_raw_parts(ptr.add(mem::size_of::<i8>()+mem::size_of::<u32>()), len, len)
     };
-    let input_vec = ManuallyDrop::new(input_vec);
-
-    let json_string = String::from_utf8(input_vec.to_vec())?.clone();
 
     // It is possible for null json values to reach this line, particularly if sourced directly
     // from a 3rd party module, so we ensure that we parse to option as well as the earlier type_id
     // checks.
-    let result = match serde_json::from_str::<Option<TOutput>>(&json_string)? {
-        Some(v) => StreamOption::Some(v),
+    let result = match serde_json::from_slice::<Option<TOutput>>(&input_vec.clone())? {
+        Some(v) => StreamOption::Some(v.clone()),
         None => StreamOption::None,
     };
+    let _ = ManuallyDrop::new(input_vec);
 
     Ok(result)
 }
