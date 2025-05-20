@@ -19,6 +19,9 @@ tests/modules/rust_wasm32_filter/pkg
 tests/modules/rust_wasm32_normalize/Cargo.lock
 tests/modules/rust_wasm32_normalize/target
 tests/modules/rust_wasm32_normalize/pkg
+tests/modules/rust_wasm32_memory/Cargo.lock
+tests/modules/rust_wasm32_memory/target
+tests/modules/rust_wasm32_memory/pkg
 sdk-rust/target
 sdk-rust/Cargo.lock
 host-go/build/host-go.exe

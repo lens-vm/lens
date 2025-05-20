@@ -46,6 +46,12 @@ var WasmPath7 string = getPathRelativeToProjectRoot(
 	"/tests/modules/rust_wasm32_normalize/target/wasm32-unknown-unknown/debug/rust_wasm32_normalize.wasm",
 )
 
+// WasmPath_Memory contains a wasm32 rust lens that copies the input item multiple times before returning it
+// in order to check for memory related bugs.
+var WasmPath_Memory string = getPathRelativeToProjectRoot(
+	"/tests/modules/rust_wasm32_memory/target/wasm32-unknown-unknown/debug/rust_wasm32_memory.wasm",
+)
+
 func getPathRelativeToProjectRoot(relativePath string) string {
 	_, filename, _, _ := runtime.Caller(0)
 	root := path.Dir(path.Dir(path.Dir(filename)))
