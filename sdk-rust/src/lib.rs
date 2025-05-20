@@ -137,7 +137,7 @@ pub fn free_transport_buffer(ptr: *mut u8) -> Result<()> {
 
     let len: usize = len_rdr.read_u32::<LittleEndian>()?.try_into()?;
 
-    free(ptr, len);
+    free(ptr, mem::size_of::<i8>()+mem::size_of::<u32>()+len);
 
     Ok(())
 }
