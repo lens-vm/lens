@@ -82,7 +82,7 @@ pub fn free(ptr: *mut u8, size: usize) {
         Vec::from_raw_parts(ptr, size, size)
     };
     let buf = ManuallyDrop::new(buf);
-    mem::drop(ManuallyDrop::into_inner(buf));
+    ManuallyDrop::into_inner(buf);
 }
 
 /// Manually drop the memory occupied by a transport buffer at the given location.
@@ -116,15 +116,15 @@ pub fn free_transport_buffer(ptr: *mut u8) -> Result<()> {
 
     let type_id: i8  = type_rdr.read_i8()?;
     if type_id == NIL_TYPE_ID {
-        mem::drop(ManuallyDrop::into_inner(type_rdr));
+        ManuallyDrop::into_inner(type_rdr);
         return Ok(())
     }
     if type_id == EOS_TYPE_ID {
-        mem::drop(ManuallyDrop::into_inner(type_rdr));
+        ManuallyDrop::into_inner(type_rdr);
         return Ok(())
     }
     if type_id < 0 {
-        mem::drop(ManuallyDrop::into_inner(type_rdr));
+        ManuallyDrop::into_inner(type_rdr);
         return Ok(())
     }
 
