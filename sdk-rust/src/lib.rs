@@ -172,15 +172,15 @@ pub fn try_from_mem<TOutput: for<'a> Deserialize<'a>>(ptr: *mut u8) -> Result<St
 
     let type_id: i8  = type_rdr.read_i8()?;
     if type_id == NIL_TYPE_ID {
-        mem::drop(ManuallyDrop::into_inner(type_rdr));
+        free_transport_buffer(ptr)?;
         return Ok(StreamOption::None)
     }
     if type_id == EOS_TYPE_ID {
-        mem::drop(ManuallyDrop::into_inner(type_rdr));
+        free_transport_buffer(ptr)?;
         return Ok(StreamOption::EndOfStream)
     }
     if type_id < 0 {
-        mem::drop(ManuallyDrop::into_inner(type_rdr));
+        free_transport_buffer(ptr)?;
         return Result::from(error::LensError::InputErrorUnsupportedError)
     }
 
