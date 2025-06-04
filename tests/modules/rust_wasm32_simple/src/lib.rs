@@ -8,7 +8,7 @@ use lens_sdk::StreamOption;
 use lens_sdk::option::StreamOption::{Some, None, EndOfStream};
 
 #[link(wasm_import_module = "lens")]
-extern "C" {
+unsafe extern "C" {
     fn next() -> *mut u8;
 }
 
@@ -28,12 +28,12 @@ pub struct Output {
 	pub age: u64,
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern fn alloc(size: usize) -> *mut u8 {
     lens_sdk::alloc(size)
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern fn transform() -> *mut u8 {
     match try_transform() {
         Ok(o) => match o {
