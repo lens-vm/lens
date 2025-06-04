@@ -137,7 +137,9 @@ pub unsafe fn free_transport_buffer(ptr: *mut u8) -> Result<()> {
 
     let len: usize = len_rdr.read_u32::<LittleEndian>()?.try_into()?;
 
-    free(ptr, mem::size_of::<i8>()+mem::size_of::<u32>()+len);
+    unsafe {
+        free(ptr, mem::size_of::<i8>()+mem::size_of::<u32>()+len);
+    }
 
     Ok(())
 }
@@ -171,15 +173,21 @@ pub unsafe fn try_from_mem<TOutput: for<'a> Deserialize<'a>>(ptr: *mut u8) -> Re
 
     let type_id: i8  = type_rdr.read_i8()?;
     if type_id == NIL_TYPE_ID {
-        free_transport_buffer(ptr)?;
+        unsafe {
+            free_transport_buffer(ptr)?;
+        }
         return Ok(StreamOption::None)
     }
     if type_id == EOS_TYPE_ID {
-        free_transport_buffer(ptr)?;
+        unsafe {
+            free_transport_buffer(ptr)?;
+        }
         return Ok(StreamOption::EndOfStream)
     }
     if type_id < 0 {
-        free_transport_buffer(ptr)?;
+        unsafe {
+            free_transport_buffer(ptr)?;
+        }
         return Result::from(error::LensError::InputErrorUnsupportedError)
     }
 
@@ -202,7 +210,9 @@ pub unsafe fn try_from_mem<TOutput: for<'a> Deserialize<'a>>(ptr: *mut u8) -> Re
 
     // Now the transport pointer has been fully consumed and copied into managed memory, we can free the entire manually
     // managed transport buffer.
-    free_transport_buffer(ptr)?;
+    unsafe {
+        free_transport_buffer(ptr)?;
+    }
 
     // It is possible for null json values to reach this line, particularly if sourced directly
     // from a 3rd party module, so we ensure that we parse to option as well as the earlier type_id
