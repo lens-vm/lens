@@ -77,7 +77,7 @@ pub fn alloc(size: usize) -> *mut u8 {
 /// Manually drop the memory of the given size at the given location.
 ///
 /// It should only be called on pointers to manually managed memory.
-pub fn free(ptr: *mut u8, size: usize) {
+pub unsafe fn free(ptr: *mut u8, size: usize) {
     let buf: Vec<u8> = unsafe {
         Vec::from_raw_parts(ptr, size, size)
     };
