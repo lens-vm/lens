@@ -11,7 +11,7 @@ extern "C" {
     fn next() -> *mut u8;
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize)]
 pub struct Book {
     #[serde(rename = "Name")]
     pub name: String,
@@ -19,7 +19,7 @@ pub struct Book {
 	pub page_numbers: Vec<i32>,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize)]
 pub struct Page {
     #[serde(rename = "BookName")]
     pub book_name: String,

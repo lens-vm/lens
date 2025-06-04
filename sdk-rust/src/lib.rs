@@ -161,7 +161,7 @@ pub fn free_transport_buffer(ptr: *mut u8) -> Result<()> {
 ///
 /// This function will return an [Error](error/enum.Error.html) if the data at the given location is not in the expected
 /// format.
-pub fn try_from_mem<TOutput: for<'a> Deserialize<'a> + Clone>(ptr: *mut u8) -> Result<StreamOption<TOutput>> {
+pub fn try_from_mem<TOutput: for<'a> Deserialize<'a>>(ptr: *mut u8) -> Result<StreamOption<TOutput>> {
     let type_vec: Vec<u8> = unsafe {
         Vec::from_raw_parts(ptr, mem::size_of::<i8>(), mem::size_of::<i8>())
     };
