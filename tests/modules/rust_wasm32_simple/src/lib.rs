@@ -12,7 +12,7 @@ extern "C" {
     fn next() -> *mut u8;
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize)]
 pub struct Input {
     #[serde(rename(deserialize = "Name"))]
     pub name: String,
@@ -61,6 +61,5 @@ fn try_transform() -> Result<StreamOption<Vec<u8>>, Box<dyn Error>> {
     };
     
     let result_json = serde_json::to_vec(&result)?;
-    lens_sdk::free_transport_buffer(ptr)?;
     Ok(Some(result_json))
 }

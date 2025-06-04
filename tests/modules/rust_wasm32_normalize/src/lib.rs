@@ -11,7 +11,7 @@ extern "C" {
     fn next() -> *mut u8;
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize)]
 pub struct Book {
     #[serde(rename = "Name")]
     pub name: String,
@@ -19,7 +19,7 @@ pub struct Book {
 	pub page_numbers: Vec<i32>,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize)]
 pub struct Page {
     #[serde(rename = "BookName")]
     pub book_name: String,
@@ -66,7 +66,6 @@ fn try_transform() -> Result<StreamOption<Vec<u8>>, Box<dyn Error>> {
             };
             pending_pages.push_back(page);
         }
-        lens_sdk::free_transport_buffer(ptr)?;
     }
 
     if pending_pages.len() > 0 {

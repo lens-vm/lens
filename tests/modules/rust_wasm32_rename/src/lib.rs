@@ -98,6 +98,5 @@ fn try_transform() -> Result<StreamOption<Vec<u8>>, Box<dyn Error>> {
     input.insert(params.dst, value);
     
     let result_json = serde_json::to_vec(&input)?;
-    lens_sdk::free_transport_buffer(ptr)?;
     Ok(Some(result_json))
 }
