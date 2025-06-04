@@ -30,12 +30,12 @@ pub struct Page {
 static PENDING_PAGES: RwLock<Lazy<VecDeque<Page>>> = RwLock::new(Lazy::new(|| VecDeque::new()));
 
 #[unsafe(no_mangle)]
-pub extern fn alloc(size: usize) -> *mut u8 {
+pub extern "C" fn alloc(size: usize) -> *mut u8 {
     lens_sdk::alloc(size)
 }
 
 #[unsafe(no_mangle)]
-pub extern fn transform() -> *mut u8 {
+pub extern "C" fn transform() -> *mut u8 {
     match try_transform() {
         Ok(o) => match o {
             Some(result_json) => lens_sdk::to_mem(lens_sdk::JSON_TYPE_ID, &result_json.clone()),

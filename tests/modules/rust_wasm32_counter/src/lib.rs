@@ -21,12 +21,12 @@ pub struct Value {
 static COUNTER: Lazy<RelaxedCounter> = Lazy::new(|| RelaxedCounter::new(0));
 
 #[unsafe(no_mangle)]
-pub extern fn alloc(size: usize) -> *mut u8 {
+pub extern "C" fn alloc(size: usize) -> *mut u8 {
     lens_sdk::alloc(size)
 }
 
 #[unsafe(no_mangle)]
-pub extern fn transform() -> *mut u8 {
+pub extern "C" fn transform() -> *mut u8 {
     match try_transform() {
         Ok(o) => match o {
             Some(result_json) => lens_sdk::to_mem(lens_sdk::JSON_TYPE_ID, &result_json),
