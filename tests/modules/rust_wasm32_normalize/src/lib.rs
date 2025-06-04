@@ -66,7 +66,6 @@ fn try_transform() -> Result<StreamOption<Vec<u8>>, Box<dyn Error>> {
             };
             pending_pages.push_back(page);
         }
-        lens_sdk::free_transport_buffer(ptr)?;
     }
 
     if pending_pages.len() > 0 {

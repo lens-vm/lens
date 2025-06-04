@@ -84,6 +84,5 @@ fn try_inverse() -> Result<StreamOption<Vec<u8>>, Box<dyn Error>> {
     };
 
     let result_json = serde_json::to_vec(&result)?;
-    lens_sdk::free_transport_buffer(ptr)?;
     Ok(Some(result_json))
 }

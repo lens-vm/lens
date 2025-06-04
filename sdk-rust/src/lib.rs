@@ -155,8 +155,7 @@ pub fn free_transport_buffer(ptr: *mut u8) -> Result<()> {
 /// # Safety
 ///
 /// The pointer given to this function will typically be result of calls to the `next` host function imported by LensVM wasm modules.  It is
-/// manually managed memory, and once the result of this function is no longer needed (either due to having been processed, discarded, or copied),
-/// the pointer should be disposed of using [free_transport_buffer](fn.free_transport_buffer.html).
+/// manually managed memory, and calling this function will free the memory located at the given `ptr` - it must not be used after this call.
 ///
 /// # Errors
 ///
@@ -197,14 +196,21 @@ pub fn try_from_mem<TOutput: for<'a> Deserialize<'a> + Clone>(ptr: *mut u8) -> R
         Vec::from_raw_parts(ptr.add(mem::size_of::<i8>()+mem::size_of::<u32>()), len, len)
     };
 
+    // Clone the json bytes from the transport buffer, allowing subsequent code to operate on safely managed memory. 
+    let json_bytes = input_vec.clone();
+    let _ = ManuallyDrop::new(input_vec);
+
+    // Now the transport pointer has been fully consumed and copied into managed memory, we can free the entire manually
+    // managed transport buffer.
+    free_transport_buffer(ptr)?;
+
     // It is possible for null json values to reach this line, particularly if sourced directly
     // from a 3rd party module, so we ensure that we parse to option as well as the earlier type_id
     // checks.
-    let result = match serde_json::from_slice::<Option<TOutput>>(&input_vec.clone())? {
-        Some(v) => StreamOption::Some(v.clone()),
+    let result = match serde_json::from_slice::<Option<TOutput>>(&json_bytes)? {
+        Some(v) => StreamOption::Some(v),
         None => StreamOption::None,
     };
-    let _ = ManuallyDrop::new(input_vec);
 
     Ok(result)
 }
