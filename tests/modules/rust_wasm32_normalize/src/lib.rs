@@ -7,7 +7,7 @@ use lens_sdk::StreamOption;
 use lens_sdk::option::StreamOption::{Some, None, EndOfStream};
 
 #[link(wasm_import_module = "lens")]
-extern "C" {
+unsafe extern "C" {
     fn next() -> *mut u8;
 }
 
@@ -29,13 +29,13 @@ pub struct Page {
 
 static PENDING_PAGES: RwLock<Lazy<VecDeque<Page>>> = RwLock::new(Lazy::new(|| VecDeque::new()));
 
-#[no_mangle]
-pub extern fn alloc(size: usize) -> *mut u8 {
+#[unsafe(no_mangle)]
+pub extern "C" fn alloc(size: usize) -> *mut u8 {
     lens_sdk::alloc(size)
 }
 
-#[no_mangle]
-pub extern fn transform() -> *mut u8 {
+#[unsafe(no_mangle)]
+pub extern "C" fn transform() -> *mut u8 {
     match try_transform() {
         Ok(o) => match o {
             Some(result_json) => lens_sdk::to_mem(lens_sdk::JSON_TYPE_ID, &result_json.clone()),

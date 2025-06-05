@@ -2,7 +2,7 @@
 name = "lens_sdk"
 description = "An SDK for writing bi-directional, wasm based, LensVM transformations in Rust"
 version = "0.7.0"
-edition = "2021"
+edition = "2024"
 readme = "../README.md"
 repository = "https://github.com/lens-vm/lens"
 license-file = "../LICENSE"
