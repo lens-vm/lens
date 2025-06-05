@@ -47,7 +47,7 @@ pub extern fn transform() -> *mut u8 {
 
 fn try_transform() -> Result<StreamOption<Vec<u8>>, Box<dyn Error>> {
     let ptr = unsafe { next() };
-    let input = match lens_sdk::try_from_mem::<Input>(ptr)? {
+    let input = match unsafe { lens_sdk::try_from_mem::<Input>(ptr)? } {
         Some(v) => v,
         // Implementations of `transform` are free to handle nil however they like. In this
         // implementation we chose to return nil given a nil input.

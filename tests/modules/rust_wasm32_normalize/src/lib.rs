@@ -51,7 +51,7 @@ fn try_transform() -> Result<StreamOption<Vec<u8>>, Box<dyn Error>> {
 
     if pending_pages.len() == 0 {
         let ptr = unsafe { next() };
-        let input = match lens_sdk::try_from_mem::<Book>(ptr)? {
+        let input = match unsafe { lens_sdk::try_from_mem::<Book>(ptr)? } {
             Some(v) => v,
             // Implementations of `transform` are free to handle nil however they like. In this
             // implementation we chose to return nil given a nil input.
