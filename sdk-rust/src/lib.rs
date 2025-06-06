@@ -8,8 +8,10 @@ This crate contains members to aid in the construction of a Rust [Lens Module](h
 
 use std::mem;
 use std::mem::ManuallyDrop;
+use std::iter::Iterator;
+use std::marker::PhantomData;
 use std::io::{Cursor, Write};
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 use byteorder::{ReadBytesExt, WriteBytesExt, LittleEndian};
 
 /// [Result](https://doc.rust-lang.org/std/result/enum.Result.html) type alias returned by lens_sdk.
@@ -279,6 +281,129 @@ pub fn to_mem(type_id: i8, message: &[u8]) -> *mut u8 {
                     try_to_mem(ERROR_TYPE_ID, error::LensError::FailedToWriteErrorToMemError.to_string().as_bytes()).unwrap()
                 }
             }
+        }
+    }
+}
+
+/// Execute the given `transform` once, returning a pointer to the (serialized for transport) output.
+///
+/// The returned pointer can be sent across the wasm boundary to the executing lens-engine.
+///
+/// The given `transform` will be given an iterator that yields items of type `TInput`, `transform` may iterate
+/// through zero-to-many items before returning.
+///
+/// # Errors
+///
+/// The iterator given to `transform` may yield a [StreamOption](option/enum.StreamOption.html) if `next` returns
+/// and invalid pointer. Implmentors of `transform`s may handle that however they choose, although panicing is discouraged.
+///
+/// `transform` is free to return any [Error] kinds that they like.  [next] will serialize any returned errors, returning a
+/// pointer to the serialized content which may then be passed across the wasm boundary and handled by the executing lens engine.
+///
+/// # Examples
+///
+/// The following example lens contains a simple filter, only yielding inputs where the `type_name` property equals `"pass"`.
+///
+/// ```
+/// # use std::error::Error;
+/// # use std::iter::Iterator;
+/// # use serde::{Serialize, Deserialize};
+/// # use lens_sdk::StreamOption;
+/// #
+/// # #[link(wasm_import_module = "lens")]
+/// # unsafe extern "C" {
+/// #     fn next() -> *mut u8;
+/// # }
+/// #
+/// # #[derive(Serialize, Deserialize)]
+/// # pub struct Value {
+/// #     #[serde(rename = "Name")]
+/// #     pub name: String,
+/// #     #[serde(rename = "__type")]
+/// # 	pub type_name: String,
+/// # }
+/// #
+/// # #[unsafe(no_mangle)]
+/// # pub extern "C" fn alloc(size: usize) -> *mut u8 {
+/// #     lens_sdk::alloc(size)
+/// # }
+/// #
+/// #[unsafe(no_mangle)]
+/// pub extern "C" fn transform() -> *mut u8 {
+///     lens_sdk::next(|| -> *mut u8 { unsafe { next() } }, try_transform)
+/// }
+///
+/// fn try_transform(
+///     iter: &mut dyn Iterator<Item = lens_sdk::Result<Option<Value>>>,
+/// ) -> Result<StreamOption<Value>, Box<dyn Error>> {
+///     for item in iter {
+///         let input = match item? {
+///             Some(v) => v,
+///             None => continue,
+///         };
+///
+///         if input.type_name == "pass" {
+///             return Ok(StreamOption::Some(input))
+///         }
+///     }
+///
+///     Ok(StreamOption::EndOfStream)
+/// }
+/// ```
+pub fn next<TInput: for<'a> Deserialize<'a>, TOutput: Serialize>(
+    next: impl Fn() -> *mut u8,
+    transform: impl Fn(
+        // `transform` will only ever recieve lens_sdk errors, the lens should decide what to do with them
+        &mut dyn Iterator<Item = Result<Option<TInput>>>,
+    // `transform` must be permitted to return any kind of error that lens-authors decide to
+    ) -> std::result::Result<StreamOption<TOutput>, Box<dyn std::error::Error>>,
+) -> *mut u8 {
+    let mut iterator = InputIterator::new(&next);
+
+    match transform(&mut iterator) {
+        Ok(o) => match o {
+            StreamOption::Some(value) => match serde_json::to_vec(&value) {
+                Ok(json) => to_mem(JSON_TYPE_ID, &json),
+                Err(e) => to_mem(ERROR_TYPE_ID, &e.to_string().as_bytes()),
+            },
+            StreamOption::None => nil_ptr(),
+            StreamOption::EndOfStream => to_mem(EOS_TYPE_ID, &[]),
+        },
+        Err(e) => to_mem(ERROR_TYPE_ID, &e.to_string().as_bytes())
+    }
+}
+
+struct InputIterator<'a, TInput> {
+    next_ptr: &'a dyn Fn() -> *mut u8,
+    // `value_type` is used by the compiler in order to limit the number
+    // of compiled types, PhantomData is the standard zero-cost way of doing this.
+    value_type: PhantomData<TInput>,
+}
+
+impl<'a, TInput> InputIterator<'a, TInput> {
+    fn new(next: &'a dyn Fn() -> *mut u8) -> InputIterator<'a, TInput> {
+        InputIterator::<'a, TInput> {
+            next_ptr: next,
+            value_type: PhantomData,
+        }
+    }
+}
+
+impl<TInput> Iterator for InputIterator<'_, TInput>
+    where TInput : for<'a> Deserialize<'a> {
+    type Item = Result<Option<TInput>>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let ptr = (self.next_ptr)();
+
+        match unsafe{ try_from_mem::<TInput>(ptr) } {
+            Ok(val) => match val {
+                StreamOption::None => Some(Ok(None)),
+                StreamOption::Some(v) => Some(Ok(Some(v))),
+                // EndOfStream gets mapped to None, to match the Iterator interface
+                StreamOption::EndOfStream => None,
+            },
+            Err(e) => Some(Err(e)),
         }
     }
 }

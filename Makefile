@@ -8,6 +8,7 @@ deps\:test-ci:
 deps\:test:
 	$(MAKE) -C ./host-go build
 	$(MAKE) -C ./tests/modules build
+	$(MAKE) -C ./tests/modules build:test
 
 .PHONY: deps\:test-js
 deps\:test-js:
@@ -18,6 +19,7 @@ deps\:test-js:
 .PHONY: test
 test:
 	$(MAKE) deps:test
+	$(MAKE) -C ./tests/modules test
 	$(MAKE) --no-print-directory -C ./host-go test:no-deps
 	$(MAKE) --no-print-directory -C ./tests/integration test:no-deps
 
