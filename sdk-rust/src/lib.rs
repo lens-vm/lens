@@ -433,3 +433,26 @@ macro_rules! define_next {
         }
     };
 }
+
+/// Define the mandatory `transform` function for this Lens.
+///
+/// This macro wraps the provided `try_transform` function, providing the boilerplate required to handle input items
+/// sent across the WASM boundary from the Lens engine. The resultant function is responsible for transforming
+/// input items pulled in by [next()](macro.define_next.html) and yields a pointer to the serialized result.
+///
+/// It assumes that a `next()` function exists within the calling scope.
+#[macro_export]
+macro_rules! define_transform {
+    ($try_transform:ident) => {
+        #[unsafe(no_mangle)]
+        pub extern "C" fn transform() -> *mut u8 {
+            $crate::next(|| -> *mut u8 { unsafe { next() } }, $try_transform)
+        }
+    };
+    ($next:ident, $try_transform:ident) => {
+        #[unsafe(no_mangle)]
+        pub extern "C" fn transform() -> *mut u8 {
+            $crate::next($next(), $try_transform)
+        }
+    };
+}

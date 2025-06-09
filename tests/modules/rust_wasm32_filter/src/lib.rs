@@ -5,6 +5,7 @@ use lens_sdk::StreamOption;
 
 lens_sdk::define_alloc!();
 lens_sdk::define_next!();
+lens_sdk::define_transform!(try_transform);
 
 #[derive(Serialize, Deserialize)]
 #[cfg_attr(test, derive(PartialEq, Debug))]
@@ -13,11 +14,6 @@ pub struct Value {
     pub name: String,
     #[serde(rename = "__type")]
 	pub type_name: String,
-}
-
-#[unsafe(no_mangle)]
-pub extern "C" fn transform() -> *mut u8 {
-    lens_sdk::next(|| -> *mut u8 { unsafe { next() } }, try_transform)
 }
 
 fn try_transform(
