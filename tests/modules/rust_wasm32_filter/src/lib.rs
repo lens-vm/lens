@@ -1,7 +1,7 @@
 use std::error::Error;
+use std::iter::Iterator;
 use serde::{Serialize, Deserialize};
 use lens_sdk::StreamOption;
-use lens_sdk::option::StreamOption::{Some, None, EndOfStream};
 
 #[link(wasm_import_module = "lens")]
 unsafe extern "C" {
@@ -9,6 +9,7 @@ unsafe extern "C" {
 }
 
 #[derive(Serialize, Deserialize)]
+#[cfg_attr(test, derive(PartialEq, Debug))]
 pub struct Value {
     #[serde(rename = "Name")]
     pub name: String,
@@ -23,30 +24,72 @@ pub extern "C" fn alloc(size: usize) -> *mut u8 {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn transform() -> *mut u8 {
-    match try_transform() {
-        Ok(o) => match o {
-            Some(result_json) => lens_sdk::to_mem(lens_sdk::JSON_TYPE_ID, &result_json),
-            None => lens_sdk::nil_ptr(),
-            EndOfStream => lens_sdk::to_mem(lens_sdk::EOS_TYPE_ID, &[]),
-        },
-        Err(e) => lens_sdk::to_mem(lens_sdk::ERROR_TYPE_ID, &e.to_string().as_bytes())
-    }
+    lens_sdk::next(|| -> *mut u8 { unsafe { next() } }, try_transform)
 }
 
-fn try_transform() -> Result<StreamOption<Vec<u8>>, Box<dyn Error>> {
-    loop {
-        let ptr = unsafe { next() };
-        let input = match unsafe { lens_sdk::try_from_mem::<Value>(ptr)? } {
+fn try_transform(
+    iter: &mut dyn Iterator<Item = lens_sdk::Result<Option<Value>>>,
+) -> Result<StreamOption<Value>, Box<dyn Error>> {
+    for item in iter {
+        let input = match item? {
             Some(v) => v,
-            // Implementations of `transform` are free to handle nil however they like. In this
-            // implementation we chose to return nil given a nil input.
-            None => return Ok(None),
-            EndOfStream => return Ok(EndOfStream),
+            None => continue,
         };
 
         if input.type_name == "pass" {
-            let result_json = serde_json::to_vec(&input)?;
-            return Ok(Some(result_json))
+            return Ok(StreamOption::Some(input))
         }
+    }
+
+    Ok(StreamOption::EndOfStream)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_try_transform_pass() {
+        let input = [
+            Ok(
+                Some(
+                    Value{
+                        name: "John".to_string(),
+                        type_name: "pass".to_string(),
+                    },
+                ),
+            ),
+        ];
+
+        let result = try_transform(&mut input.into_iter()).unwrap();
+
+        assert_eq!(
+            result,
+            StreamOption::Some(Value{
+                name: "John".to_string(),
+                type_name: "pass".to_string(),
+            }),
+        );
+    }
+
+    #[test]
+    fn test_try_transform_skip() {
+        let input = [
+            Ok(
+                Some(
+                    Value{
+                        name: "Fred".to_string(),
+                        type_name: "fail".to_string(),
+                    },
+                ),
+            ),
+        ];
+
+        let result = try_transform(&mut input.into_iter()).unwrap();
+
+        assert_eq!(
+            result,
+            StreamOption::EndOfStream,
+        );
     }
 }
