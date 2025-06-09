@@ -457,6 +457,29 @@ macro_rules! define_transform {
     };
 }
 
+/// Define the optional `inverse` function for this Lens.
+///
+/// This macro wraps the provided `try_inverse` function, providing the boilerplate required to handle input items
+/// sent across the WASM boundary from the Lens engine. The resultant function is responsible for inversing transforms
+/// on input items pulled in by [next()](macro.define_next.html) and yields a pointer to the serialized result.
+///
+/// It assumes that a `next()` function exists within the calling scope.
+#[macro_export]
+macro_rules! define_inverse {
+    ($try_inverse:ident) => {
+        #[unsafe(no_mangle)]
+        pub extern "C" fn inverse() -> *mut u8 {
+            $crate::next(|| -> *mut u8 { unsafe { next() } }, $try_inverse)
+        }
+    };
+    ($next:ident, $try_inverse:ident) => {
+        #[unsafe(no_mangle)]
+        pub extern "C" fn inverse() -> *mut u8 {
+            $crate::next($next(), $try_inverse)
+        }
+    };
+}
+
 /// Define the optional `set_param` function for this Lens.
 ///
 /// `set_param` is used to recieve static parameters from the Lens engine. If parameters are provided to the Lens
