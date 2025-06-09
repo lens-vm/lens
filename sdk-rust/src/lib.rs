@@ -456,3 +456,49 @@ macro_rules! define_transform {
         }
     };
 }
+
+/// Define the optional `set_param` function for this Lens.
+///
+/// `set_param` is used to recieve static parameters from the Lens engine. If parameters are provided to the Lens
+/// engine, this function will be called once on initialization, before items are are fed through the transform/inverse
+/// functions.  This macro defines the boiler plate required to recieve them.
+///
+/// It takes the name of the variable in which the parameter should be stored, and the type of the parameter.
+///
+/// # Examples
+///
+/// ```
+/// # use std::sync::RwLock;
+/// # use serde::Deserialize;
+/// #
+/// #[derive(Deserialize, Clone)]
+/// pub struct Parameters {
+///     pub src: String,
+///     pub dst: String,
+/// }
+///
+/// static PARAMETERS: RwLock<Option<Parameters>> = RwLock::new(None);
+///
+/// lens_sdk::define_set_param!(PARAMETERS: Parameters);
+/// ```
+#[macro_export]
+macro_rules! define_set_param {
+    ($var:ident: $Type:ty) => {
+        #[unsafe(no_mangle)]
+        pub extern "C" fn set_param(ptr: *mut u8) -> *mut u8 {
+            match try_set_param(ptr) {
+                Ok(_) => $crate::nil_ptr(),
+                Err(e) => $crate::to_mem($crate::ERROR_TYPE_ID, &e.to_string().as_bytes())
+            }
+        }
+
+        fn try_set_param(ptr: *mut u8) -> Result<(), Box<dyn std::error::Error>> {
+            let parameter =  unsafe { $crate::try_from_mem::<$Type>(ptr)? }
+                .ok_or($crate::error::LensError::ParametersNotSetError)?;
+
+            let mut dst = $var.write()?;
+            *dst = Some(parameter);
+            Ok(())
+        }
+    };
+}
