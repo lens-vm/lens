@@ -10,10 +10,7 @@ use serde::Deserialize;
 use lens_sdk::StreamOption;
 use lens_sdk::error::LensError;
 
-lens_sdk::define_alloc!();
-lens_sdk::define_next!();
-lens_sdk::define_transform!(try_transform);
-lens_sdk::define_set_param!(PARAMETERS: Parameters);
+lens_sdk::define!(PARAMETERS: Parameters, try_transform);
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 enum ModuleError {

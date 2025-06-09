@@ -4,6 +4,8 @@
 
 /*!
 This crate contains members to aid in the construction of a Rust [Lens Module](https://github.com/lens-vm/spec#abi---wasm-module-functions).
+
+To get started, see [define](macro.define.html).
 */
 
 use std::mem;
@@ -523,5 +525,171 @@ macro_rules! define_set_param {
             *dst = Some(parameter);
             Ok(())
         }
+    };
+}
+
+/// Define the boilerplate for the Lens.
+///
+/// This macro is the easiest way to setup your Lens file - provide this with a transform function and
+/// you should have a valid Lens.
+///
+/// This macro handles multiple patterns, each handled pattern will generate a different set of functions.
+///
+/// - [next()](macro.define_next.html) and [alloc()](macro.define_alloc.html) will always be defined.
+/// - [transform()](macro.define_transform.html) will be defined if given a single transform function.
+/// - [transform()](macro.define_transform.html) and [inverse()](macro.define_inverse.html) will be
+///   defined if given the identities of two transform/inverse functions.
+/// - [set_param()](macro.define_set_param.html) will be defined if given the name of a variable to hold a param,
+///   and its type.
+///
+/// # Examples
+///
+/// The following example contains a complete Lens that transforms inputs by incrementing input.age by 1.
+///
+/// ```
+/// # use serde::{ Deserialize, Serialize };
+/// # use lens_sdk::StreamOption;
+/// # use std::error::Error;
+/// #
+/// lens_sdk::define!(try_transform);
+///
+/// #[derive(Serialize, Deserialize)]
+/// pub struct Value {
+///     #[serde(rename = "FullName")]
+///     pub name: String,
+///     #[serde(rename = "Age")]
+/// 	pub age: i64,
+/// }
+///
+/// fn try_transform(
+///     iter: &mut dyn Iterator<Item = lens_sdk::Result<Option<Value>>>,
+/// ) -> Result<StreamOption<Value>, Box<dyn Error>> {
+///     for item in iter {
+///         let input = match item? {
+///             Some(v) => v,
+///             None => return Ok(StreamOption::None),
+///         };
+///
+///         let result = Value {
+///             name: input.name,
+///             age: input.age + 1,
+///         };
+///
+///         return Ok(StreamOption::Some(result))
+///     }
+///
+///     Ok(StreamOption::EndOfStream)
+/// }
+/// ```
+///
+/// The next example contains a complete Lens that transforms, and inverses, the incrementing of input.age by the amount
+/// provided by the configured paramter.
+///
+/// ```
+/// # use std::sync::RwLock;
+/// # use serde::{ Deserialize, Serialize };
+/// # use lens_sdk::StreamOption;
+/// # use lens_sdk::error::LensError;
+/// # use std::error::Error;
+/// #
+/// lens_sdk::define!(PARAMETERS: Parameters, try_transform, try_inverse);
+///
+/// #[derive(Deserialize, Clone)]
+/// pub struct Parameters {
+///     pub magnitude: i64,
+/// }
+///
+/// static PARAMETERS: RwLock<Option<Parameters>> = RwLock::new(None);
+///
+/// #[derive(Serialize, Deserialize)]
+/// pub struct Value {
+///     #[serde(rename = "FullName")]
+///     pub name: String,
+///     #[serde(rename = "Age")]
+/// 	pub age: i64,
+/// }
+///
+/// fn try_transform(
+///     iter: &mut dyn Iterator<Item = lens_sdk::Result<Option<Value>>>,
+/// ) -> Result<StreamOption<Value>, Box<dyn Error>> {
+///     let params = PARAMETERS.read()?
+///         .clone()
+///         .ok_or(LensError::ParametersNotSetError)?;
+///
+///     for item in iter {
+///         let input = match item? {
+///             Some(v) => v,
+///             None => return Ok(StreamOption::None),
+///         };
+///
+///         let result = Value {
+///             name: input.name,
+///             age: input.age + params.magnitude,
+///         };
+///
+///         return Ok(StreamOption::Some(result))
+///     }
+///
+///     Ok(StreamOption::EndOfStream)
+/// }
+///
+/// fn try_inverse(
+///     iter: &mut dyn Iterator<Item = lens_sdk::Result<Option<Value>>>,
+/// ) -> Result<StreamOption<Value>, Box<dyn Error>> {
+///     let params = PARAMETERS.read()?
+///         .clone()
+///         .ok_or(LensError::ParametersNotSetError)?;
+///
+///     for item in iter {
+///         let input = match item? {
+///             Some(v) => v,
+///             None => return Ok(StreamOption::None),
+///         };
+///
+///         let result = Value {
+///             name: input.name,
+///             age: input.age - params.magnitude,
+///         };
+///
+///         return Ok(StreamOption::Some(result))
+///     }
+///
+///     Ok(StreamOption::EndOfStream)
+/// }
+/// ```
+#[macro_export]
+macro_rules! define {
+    () => {
+        $crate::define_alloc!();
+        $crate::define_next!();
+    };
+    ($try_transform:ident) => {
+        $crate::define_alloc!();
+        $crate::define_next!();
+        $crate::define_transform!($try_transform);
+    };
+    ($try_transform:ident, $try_inverse:ident) => {
+        $crate::define_alloc!();
+        $crate::define_next!();
+        $crate::define_transform!($try_transform);
+        $crate::define_inverse!($try_inverse);
+    };
+    ($param_var:ident: $ParamType:ty) => {
+        $crate::define_alloc!();
+        $crate::define_next!();
+        $crate::define_set_param!($param_var: $ParamType);
+    };
+    ($param_var:ident: $ParamType:ty, $try_transform:ident) => {
+        $crate::define_alloc!();
+        $crate::define_next!();
+        $crate::define_set_param!($param_var: $ParamType);
+        $crate::define_transform!($try_transform);
+    };
+    ($param_var:ident: $ParamType:ty, $try_transform:ident, $try_inverse:ident) => {
+        $crate::define_alloc!();
+        $crate::define_next!();
+        $crate::define_set_param!($param_var: $ParamType);
+        $crate::define_transform!($try_transform);
+        $crate::define_inverse!($try_inverse);
     };
 }

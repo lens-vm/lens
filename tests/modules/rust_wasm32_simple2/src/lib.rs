@@ -6,10 +6,7 @@ use std::error::Error;
 use serde::{Serialize, Deserialize};
 use lens_sdk::StreamOption;
 
-lens_sdk::define_alloc!();
-lens_sdk::define_next!();
-lens_sdk::define_transform!(try_transform);
-lens_sdk::define_inverse!(try_inverse);
+lens_sdk::define!(try_transform, try_inverse);
 
 #[derive(Serialize, Deserialize)]
 pub struct Value {
