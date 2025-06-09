@@ -8,6 +8,7 @@ use std::error::Error;
 use std::{fmt, error};
 use serde::Deserialize;
 use lens_sdk::StreamOption;
+use lens_sdk::error::LensError;
 
 #[link(wasm_import_module = "lens")]
 unsafe extern "C" {
@@ -16,7 +17,6 @@ unsafe extern "C" {
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 enum ModuleError {
-    ParametersNotSetError,
     PropertyNotFoundError{requested: String},
 }
 
@@ -25,7 +25,6 @@ impl error::Error for ModuleError { }
 impl fmt::Display for ModuleError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match &*self {
-            ModuleError::ParametersNotSetError => f.write_str("Parameters have not been set."),
             ModuleError::PropertyNotFoundError { requested } =>
                 write!(f, "The requested property was not found. Requested: {}", requested),
         }
@@ -55,7 +54,7 @@ pub extern "C" fn set_param(ptr: *mut u8) -> *mut u8 {
 
 fn try_set_param(ptr: *mut u8) -> Result<(), Box<dyn Error>> {
     let parameter =  unsafe { lens_sdk::try_from_mem::<Parameters>(ptr)? }
-        .ok_or(ModuleError::ParametersNotSetError)?;
+        .ok_or(LensError::ParametersNotSetError)?;
 
     let mut dst = PARAMETERS.write()?;
     *dst = Some(parameter);
@@ -86,7 +85,7 @@ fn try_transform() -> Result<StreamOption<Vec<u8>>, Box<dyn Error>> {
 
     let params = PARAMETERS.read()?
         .clone()
-        .ok_or(ModuleError::ParametersNotSetError)?
+        .ok_or(LensError::ParametersNotSetError)?
         .clone();
 
     let value = input.get_mut(&params.src)

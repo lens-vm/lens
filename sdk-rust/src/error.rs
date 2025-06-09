@@ -66,6 +66,7 @@ impl From<LensError> for Error {
 pub enum LensError {
     InputErrorUnsupportedError,
     FailedToWriteErrorToMemError,
+    ParametersNotSetError,
 }
 
 impl error::Error for LensError { }
@@ -75,6 +76,7 @@ impl fmt::Display for LensError {
         match &*self {
             LensError::InputErrorUnsupportedError => f.write_str("Using errors as inputs is currently unsupported."),
             LensError::FailedToWriteErrorToMemError => f.write_str("An error occured when attempting to write an error to memory."),
+            LensError::ParametersNotSetError => f.write_str("Parameters have not been set."),
         }
     }
 }
