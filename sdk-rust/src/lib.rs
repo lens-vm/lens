@@ -407,3 +407,16 @@ impl<TInput> Iterator for InputIterator<'_, TInput>
         }
     }
 }
+
+/// Define the mandatory `alloc` function for this Lens.
+///
+/// It is responsible for allocating memory for input items and will be called by the Lens engine.
+#[macro_export]
+macro_rules! define_alloc {
+    () => {
+        #[unsafe(no_mangle)]
+        pub extern "C" fn alloc(size: usize) -> *mut u8 {
+            $crate::alloc(size)
+        }
+    };
+}

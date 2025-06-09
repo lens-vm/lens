@@ -7,6 +7,8 @@ use serde::{Serialize, Deserialize};
 use lens_sdk::StreamOption;
 use lens_sdk::option::StreamOption::{Some, None, EndOfStream};
 
+lens_sdk::define_alloc!();
+
 #[link(wasm_import_module = "lens")]
 unsafe extern "C" {
     fn next() -> *mut u8;
@@ -18,11 +20,6 @@ pub struct Value {
     pub name: String,
     #[serde(rename = "Age")]
 	pub age: i64,
-}
-
-#[unsafe(no_mangle)]
-pub extern "C" fn alloc(size: usize) -> *mut u8 {
-    lens_sdk::alloc(size)
 }
 
 #[unsafe(no_mangle)]

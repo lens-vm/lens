@@ -10,6 +10,8 @@ use serde::Deserialize;
 use lens_sdk::StreamOption;
 use lens_sdk::error::LensError;
 
+lens_sdk::define_alloc!();
+
 #[link(wasm_import_module = "lens")]
 unsafe extern "C" {
     fn next() -> *mut u8;
@@ -38,11 +40,6 @@ pub struct Parameters {
 }
 
 static PARAMETERS: RwLock<Option<Parameters>> = RwLock::new(None);
-
-#[unsafe(no_mangle)]
-pub extern "C" fn alloc(size: usize) -> *mut u8 {
-    lens_sdk::alloc(size)
-}
 
 #[unsafe(no_mangle)]
 pub extern "C" fn set_param(ptr: *mut u8) -> *mut u8 {
