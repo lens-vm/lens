@@ -8,11 +8,7 @@ use lens_sdk::StreamOption;
 use lens_sdk::option::StreamOption::{Some, None, EndOfStream};
 
 lens_sdk::define_alloc!();
-
-#[link(wasm_import_module = "lens")]
-unsafe extern "C" {
-    fn next() -> *mut u8;
-}
+lens_sdk::define_next!();
 
 #[derive(Serialize, Deserialize)]
 pub struct Value {

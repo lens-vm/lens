@@ -4,11 +4,7 @@ use serde::{Serialize, Deserialize};
 use lens_sdk::StreamOption;
 
 lens_sdk::define_alloc!();
-
-#[link(wasm_import_module = "lens")]
-unsafe extern "C" {
-    fn next() -> *mut u8;
-}
+lens_sdk::define_next!();
 
 #[derive(Serialize, Deserialize)]
 #[cfg_attr(test, derive(PartialEq, Debug))]

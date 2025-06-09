@@ -420,3 +420,16 @@ macro_rules! define_alloc {
         }
     };
 }
+
+/// Define the mandatory `next` function for this Lens.
+///
+/// It is responsible for pulling the pointer to the next input item from the Lens engine.
+#[macro_export]
+macro_rules! define_next {
+    () => {
+        #[link(wasm_import_module = "lens")]
+        unsafe extern "C" {
+            fn next() -> *mut u8;
+        }
+    };
+}
